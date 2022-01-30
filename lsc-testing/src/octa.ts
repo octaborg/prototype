@@ -116,6 +116,7 @@ export class TransactionalProof {
         this.validateAvgMonthlyIncomeProof(this.requiredProofs.requiredProofs[i]),
         new Bool(true)));
     }
+    validated.assertEquals(true);
   }
 
   validateAvgMonthlyBalanceProof(requiredProof: RequiredProof): Bool {
