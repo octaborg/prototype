@@ -21,19 +21,17 @@ http://127.0.0.1:6060/api/transactions
 ```
 
 ```
-{
-    "message": [
-        {
-            "id": 0,
-            "amount": 12,
-            "sendingAccount": 1,
-            "receivingAccount": 0,
-            "kind": "credit",
-            "description": "salary",
-            "timestamp": 0
-        }
-    ]
-}
+[
+    {
+        "id": 0,
+        "amount": 12,
+        "sendingAccount": 1,
+        "receivingAccount": 0,
+        "kind": "credit",
+        "description": "salary",
+        "timestamp": 0
+    }
+]
 ```
 
 ### /api/transactions/:id
@@ -46,15 +44,13 @@ http://127.0.0.1:6060/api/transactions/0
 
 ```
 {
-    "message": {
-        "id": 0,
-        "amount": 12,
-        "sendingAccount": 1,
-        "receivingAccount": 0,
-        "kind": "credit",
-        "description": "salary",
-        "timestamp": 0
-    }
+    "id": 0,
+    "amount": 12,
+    "sendingAccount": 1,
+    "receivingAccount": 0,
+    "kind": "credit",
+    "description": "salary",
+    "timestamp": 0
 }
 ```
 
@@ -68,21 +64,19 @@ http://127.0.0.1:6060/api/transactions/account/0
 
 ```
 {
-    "message": {
-        "id": 0,
-        "balance": 3242,
-        "timestamp": 0,
-        "transactions": [
-            {
-                "id": 0,
-                "amount": 12,
-                "sendingAccount": 1,
-                "receivingAccount": 0,
-                "kind": "credit",
-                "description": "salary",
-                "timestamp": 0
-            }
-        ]
-    }
+    "id": 0,
+    "balance": 3242,
+    "timestamp": 0,
+    "transactions": [
+        {
+            "id": 0,
+            "amount": 12,
+            "sendingAccount": 1,
+            "receivingAccount": 0,
+            "kind": "credit",
+            "description": "salary",
+            "timestamp": 0
+        }
+    ]
 }
 ```
