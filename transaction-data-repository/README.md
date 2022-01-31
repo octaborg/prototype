@@ -86,3 +86,4 @@ http://127.0.0.1:6060/api/transactions/account/0
 ## Some links
 
 1. https://protobufjs.github.io/protobuf.js/
+2. https://www.section.io/engineering-education/how-to-create-a-simple-rest-api-using-typescript-and-nodejs/
