@@ -8,6 +8,8 @@ Simply run
 npm run dev
 ```
 
+I made the protobuf message definitions using [types-as-schema](https://www.npmjs.com/package/types-as-schema)
+
 ## Open endpoint
 
 This endpoint reveals the confidential data. It follows specification from [4.4.1 Component: HTTPS API](https://github.com/octaborg/proposals/blob/main/OCTA-0.md#441-component-https-api)
@@ -80,3 +82,7 @@ http://127.0.0.1:6060/api/transactions/account/0
     ]
 }
 ```
+
+## Some links
+
+1. https://protobufjs.github.io/protobuf.js/

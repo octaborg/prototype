@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+message Transaction {
+  Number id = 1;
+  Number amount = 2;
+  Number sendingAccount = 3;
+  Number receivingAccount = 4;
+  String kind = 5;
+  String description = 6;
+  Number timestamp = 7;
+}
+
+message Account {
+  Number id = 1;
+  Number balance = 2;
+  Number timestamp = 3;
+  repeated Transaction transactions = 4;
+}

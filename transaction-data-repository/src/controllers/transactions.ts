@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
-import { Account, Transaction } from '../models/transactions';
+import { Account, Transaction } from '../entity/payloads';
 import TransactionsModel from '../models/transactions';
 
 // getting all the transactions
