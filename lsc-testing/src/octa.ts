@@ -10,6 +10,7 @@ import {
   Circuit,
   arrayProp,
   AsFieldElements,
+  isReady,
 } from 'snarkyjs';
 
 // This is an enum written as a class, is there a way to just define an enum in a
@@ -182,6 +183,7 @@ export class RequiredProof extends CircuitValue  {
 
 }
 
+await isReady;
 const MAX_REQUIRED_PROOFS = 10;
 export class RequiredProofs extends CircuitValue {
   @arrayProp(RequiredProof, MAX_REQUIRED_PROOFS) requiredProofs: Array<RequiredProof>;
