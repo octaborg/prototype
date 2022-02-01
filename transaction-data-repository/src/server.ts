@@ -1,7 +1,9 @@
 import http from 'http';
 import express, { Express } from 'express';
 import morgan from 'morgan';
-import routes from './routes/transactions';
+
+import transaction_routes from './routes/transactions';
+import bin_routes from './routes/bin';
 
 const router: Express = express();
 
@@ -27,7 +29,8 @@ router.use((req, res, next) => {
 });
 
 /** Routes */
-router.use('/', routes);
+router.use('/', transaction_routes);
+router.use('/', bin_routes);
 
 /** Error handling */
 router.use((req, res, next) => {
