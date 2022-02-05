@@ -85,6 +85,5 @@ async function deploy() {
 }
 
 deploy();
-// console.log('Is the sudoku solved?', (await getSnappState()).isSolved);
 
 shutdown();

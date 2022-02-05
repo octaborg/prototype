@@ -8,6 +8,9 @@ import {
   Int64,
   Signature,
   Circuit,
+  arrayProp,
+  AsFieldElements,
+  isReady,
 } from 'snarkyjs';
 
 // This is an enum written as a class, is there a way to just define an enum in a
@@ -162,7 +165,7 @@ export class RequiredProofType extends CircuitValue {
   }
 }
 
-export class RequiredProof extends CircuitValue {
+export class RequiredProof extends CircuitValue  {
   @prop requiredProofType: RequiredProofType;
   @prop upperBound: Int64;
   @prop lowerBound: Int64;
@@ -177,19 +180,19 @@ export class RequiredProof extends CircuitValue {
     this.lowerBound = lowerBound;
   }
 
+
 }
 
+await isReady;
 const MAX_REQUIRED_PROOFS = 10;
 export class RequiredProofs extends CircuitValue {
-  @prop requiredProofs: Array<RequiredProof>;
+  @arrayProp(RequiredProof, MAX_REQUIRED_PROOFS) requiredProofs: Array<RequiredProof>;
   
-
   constructor(requiredProofs: Array<RequiredProof>) {
     super();
     this.requiredProofs = requiredProofs;
   }
   
 }
-//(RequiredProofs.prototype as any)._fields = [['value', Circuit.array(RequiredProof, MAX_REQUIRED_PROOFS)]];
 
 
