@@ -1,13 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
-import { Field, Poseidon, Group, Scalar, PrivateKey, Signature } from 'snarkyjs';
+import { Bool, Field, Poseidon, Group, Scalar, PrivateKey, Signature } from 'snarkyjs';
 
 import crypto from "crypto";
+
+interface ResponseSignature {
+    s: String,
+    r: String
+}
 
 interface ResponseObject {
     message: String;
     poseidon: String;
-    signature_r: String;
-    signature_s: String;
+    signature: ResponseSignature;
 }
 
 const sign = (hash: Field, private_key: PrivateKey, G: Group) => {
@@ -35,44 +39,66 @@ const bytesToListBool = (input: Buffer) => {
     return result;
 }
 
-
-const scalarToString = (input: Scalar) => {
-    let result: String = "";
-    const fields: Field[] = input.toFields();
-    for (let f of fields) {
-        result = result.concat(f.toString());
+const listFieldsToHex = (input: Field[]) => {
+    let finalhex: string = "";
+    for (let j = 0; j < input.length; j++) {
+        const asfield = input[j];
+        const asbits = asfield.toBits();
+        let as_string = "";
+        for (let i = 0; i < asbits.length; i++) {
+            if (!asbits[i].toBoolean()) {
+                as_string += "0";
+            } else {
+                as_string += "1";
+            }
+        }
+        const asint = parseInt(as_string, 2);
+        const ashex = asint.toString(16);
+        finalhex = finalhex + ashex;
     }
-    console.log(result)
-    const buf = Buffer.from(result, "binary");
-    return buf.readUInt32BE()
+    return String(finalhex);
 }
 
-
-const stringToScalar = (input: String) => {
-    const num: number = Number(input);
-    const base2: String = num.toString(2);
-    console.log(base2);
-    return 0;
+const hexToListFields = (input: String) => {
+    const length = input.length;
+    const end = length/32;
+    const fields: Field[] = []
+    for (let j = 0; j < end; j++) {
+        const val = input.substring(32*j, 32*(j+1));
+        const asint = parseInt(val, 16);
+        const asbitstring = asint.toString(2);
+        const bits: boolean[] = [];
+        for (let i = 0; i < asbitstring.length; i++) {
+            const character = asbitstring.charAt(i);
+            if (character === "0") {
+                bits.push(false);
+            } else {
+                bits.push(true);
+            }
+        }
+        const asfield = Field.ofBits(bits);
+        fields.push(asfield);
+    }
+    return fields;
 }
-
 
 const getRandomValue = async (req: Request, res: Response, next: NextFunction) => {
-    const preimage_bytes = crypto.randomBytes(256);
-    const preimage_field = Field.ofBits(bytesToListBool(preimage_bytes));
-    const hash = Poseidon.hash([preimage_field]);
-
+    const f1 = Field.random();
+    const f2 = Field.random();
+    const f3 = Field.random();
+    const preimage = [f1, f2, f3];
+    const ashex = listFieldsToHex(preimage);
+    const hash = Poseidon.hash(preimage);
     const private_key = PrivateKey.random();
     const public_key = private_key.toPublicKey();
     const signature = Signature.create(private_key, [hash]);
-    const sss = signature.s.toFields();
-    const s = scalarToString(signature.s)
-    console.log(s, typeof s);
-    console.log(stringToScalar(s.toString()));
     let response: ResponseObject = {
-        "message": preimage_bytes.toString("hex"),
+        "message": ashex,
         "poseidon": hash.toString(),
-        "signature_r": signature.r.toString(),
-        "signature_s": s.toString()
+        "signature": {
+            "s": String(signature.s.toJSON()),
+            "r": String(signature.r.toJSON()),
+        }
     };
     return res.status(200).json(response);
 };
