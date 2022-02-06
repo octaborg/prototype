@@ -10,24 +10,67 @@ npm run dev
 
 I made the protobuf message definitions using [types-as-schema](https://www.npmjs.com/package/types-as-schema)
 
-## Random endpoint
+## Binary endpoint
 
-### /api/bin
+### Producing a signature
 
-Provides random 256 bytes long hex-encoded value, along with Poseidon hash and signature.
+Say we want to sign a message `22F64844A5A8703B1FCDC3794A3C46FB5DAC8DC3953D56EC0E1E582C3A421E02` which corresponds to single Field as it is 32 bytes long.
 
 ```
-http://127.0.0.1:6060/api/bin
+curl -X POST \
+  http://127.0.0.1:6060/api/bin/sign \
+  -H 'Content-Type: application/json' \
+  -d '{
+	"message": "22F64844A5A8703B1FCDC3794A3C46FB5DAC8DC3953D56EC0E1E582C3A421E02"
+}'
 ```
 
 responds with
 
 ```
 {
-    "message": "54cc77bd7314ad96ab6617782142ba82d11fa5d6932e6322362eca5714b2eb948b4160cc012628c516ab28659e52466db78cefa72aca4dc617f238fc00efaa8689755a34965b325248769f6708981739d9cf91d75aa28a692a1b80fcab1ad2ab5abc9bf4184aa85a314f1342e39156f7ab3a23cb643c3db845a441cb9e5ad8cf419eac8db574e7abe6980f58809a9b0849b632dc30e8c2269847c802ca2499e5af7b3b5715c7052d3664bc5c691caaaaab7798dd4a6ecf868e47c338a03b3ffbe60a064ef753305d8f8a53aa1474a1f0993100ff8efe3e04b4b84431a2150fee9fe2762d5f1bc07fe978ad453397375f1471975e116815d67665178d1dfda4a7",
-    "poseidon": "18011909633405525238417128864866884447609945617636009721181153675656794998375",
-    "signature_r": "24143027072209427246288173414089293292431194018823630685745824933625286128972",
-    "signature_s": "808464688"
+    "message": "22F64844A5A8703B1FCDC3794A3C46FB5DAC8DC3953D56EC0E1E582C3A421E02",
+    "public_key": {
+        "g": {
+            "x": "13970885179067814607154447503640693252502336289886406913311117794136382926396",
+            "y": "936739053817989325499878633856848644584314074363365320244824700802831723737"
+        }
+    },
+    "signature": {
+        "s": "28152743220804432302389329541171083660313036683022934833366094078752235636711",
+        "r": "23645393687493419657103339579028058596345736387992278401025980420953712797308"
+    }
+}
+```
+
+Messages need to be a multiple of 32 bytes in their lengths. Private key is random for each call.
+
+### Verifying a signature
+
+```
+curl -X POST \
+  http://127.0.0.1:6060/api/bin/verify \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "message": "22F64844A5A8703B1FCDC3794A3C46FB5DAC8DC3953D56EC0E1E582C3A421E02",
+    "public_key": {
+        "g": {
+            "x": "13970885179067814607154447503640693252502336289886406913311117794136382926396",
+            "y": "936739053817989325499878633856848644584314074363365320244824700802831723737"
+        }
+    },
+    "signature": {
+        "s": "28152743220804432302389329541171083660313036683022934833366094078752235636711",
+        "r": "23645393687493419657103339579028058596345736387992278401025980420953712797308"
+    }
+}'
+```
+
+responds with
+
+```
+{
+    "result": true
 }
 ```
 
