@@ -9,7 +9,6 @@ import {
   Signature,
   Circuit,
   arrayProp,
-  AsFieldElements,
   isReady,
 } from 'snarkyjs';
 
@@ -114,10 +113,10 @@ export class TransactionalProof {
         this.validateAvgMonthlyBalanceProof(this.requiredProofs.requiredProofs[i]),
         new Bool(true)));
 
-      validated = validated.and(Circuit.if(
-        this.requiredProofs.requiredProofs[i].requiredProofType.equals(RequiredProofType.avgMonthlyIncomeProof()),
-        this.validateAvgMonthlyIncomeProof(this.requiredProofs.requiredProofs[i]),
-        new Bool(true)));
+      // validated = validated.and(Circuit.if(
+      //   this.requiredProofs.requiredProofs[i].requiredProofType.equals(RequiredProofType.avgMonthlyIncomeProof()),
+      //   this.validateAvgMonthlyIncomeProof(this.requiredProofs.requiredProofs[i]),
+      //   new Bool(true)));
     }
     validated.assertEquals(true);
   }
@@ -129,7 +128,7 @@ export class TransactionalProof {
   }
 
   validateAvgMonthlyIncomeProof(requiredProof: RequiredProof): Bool {
-    let avgMonthlyIncome = new Int64(new Field(5000)); // TODO <- calculate this
+    let avgMonthlyIncome = new Int64(new Field(1000)); // TODO <- calculate this
     return requiredProof.lowerBound.value.lte(avgMonthlyIncome.value)
     .and(requiredProof.upperBound.value.gt(avgMonthlyIncome.value));
   }
@@ -166,6 +165,7 @@ export class RequiredProofType extends CircuitValue {
 }
 
 export class RequiredProof extends CircuitValue  {
+  // TODO can be encoded in a better way with a binary encoding
   @prop requiredProofType: RequiredProofType;
   @prop upperBound: Int64;
   @prop lowerBound: Int64;
@@ -194,5 +194,3 @@ export class RequiredProofs extends CircuitValue {
   }
   
 }
-
-
