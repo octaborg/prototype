@@ -12,6 +12,10 @@ import {
   isReady,
 } from 'snarkyjs';
 
+import {endOfMonth, startOfMonth, subMonths} from 'date-fns';
+
+await isReady;
+
 // This is an enum written as a class, is there a way to just define an enum in a
 // Snarky compatible way?
 export class TransactionType extends CircuitValue {
@@ -32,6 +36,10 @@ export class TransactionType extends CircuitValue {
     this.deposit = deposit;
     this.transferIn = transferIn;
     this.transaferOut = transaferOut;
+  }
+
+  isIncome() : Bool {
+    return this.deposit.and(this.transferIn);
   }
 
 }
@@ -58,15 +66,15 @@ export class Transaction extends CircuitValue {
 
 }
 
-export class AccountStatement {
-  id: Field;
-  balance: UInt64;
-  timestamp: Int64;
-  fromTimestamp: Int64;
-  toTimestamp: Int64;
-  transactions: Transaction[];
-  authorityPublicKey: PublicKey;
-  signature: Signature;
+export class AccountStatement extends CircuitValue {
+  @prop id: Field;
+  @prop balance: UInt64;
+  @prop timestamp: Int64;
+  @prop fromTimestamp: Int64;
+  @prop toTimestamp: Int64;
+  @arrayProp(Transaction, 100) transactions: Transaction[];
+  @prop authorityPublicKey: PublicKey;
+  @prop signature: Signature;
 
   constructor(
     id: Field,
@@ -78,6 +86,7 @@ export class AccountStatement {
     authorityPublicKey: PublicKey,
     signature: Signature
   ) {
+    super();
     this.id = id;
     this.balance = balance;
     this.timestamp = timestamp;
@@ -113,10 +122,10 @@ export class TransactionalProof {
         this.validateAvgMonthlyBalanceProof(this.requiredProofs.requiredProofs[i]),
         new Bool(true)));
 
-      // validated = validated.and(Circuit.if(
-      //   this.requiredProofs.requiredProofs[i].requiredProofType.equals(RequiredProofType.avgMonthlyIncomeProof()),
-      //   this.validateAvgMonthlyIncomeProof(this.requiredProofs.requiredProofs[i]),
-      //   new Bool(true)));
+      validated = validated.and(Circuit.if(
+        this.requiredProofs.requiredProofs[i].requiredProofType.equals(RequiredProofType.avgMonthlyIncomeProof()),
+        this.validateAvgMonthlyIncomeProof(this.requiredProofs.requiredProofs[i]),
+        new Bool(true)));
     }
     validated.assertEquals(true);
   }
@@ -128,9 +137,41 @@ export class TransactionalProof {
   }
 
   validateAvgMonthlyIncomeProof(requiredProof: RequiredProof): Bool {
-    let avgMonthlyIncome = new Int64(new Field(1000)); // TODO <- calculate this
+    // calculate the average monthly income for the past 3 months
+    const numMonthsToTakeIntoAccount = 3;
+    let startOfMonths : Field[] = []; // starts of months to take into account in reverse chronological order.
+    const today = new Date();
+    for (let i = 0; i <= numMonthsToTakeIntoAccount; i++) {
+      startOfMonths.push(new Field(startOfMonth(subMonths(today, i)).getTime()));
+    }
+    // calculate the avg income (Monthly incomes are calculated for later use)
+    let monthlyIncomes = new Map<Field, Field>();
+    let totalIncome = new Int64(Field.zero);
+    for (let i = 0; i < this.account.transactions.length; i++) {
+      let tx = this.account.transactions[i];
+      for (let j = startOfMonths.length - 1; j > 0; j--) {
+        totalIncome = Circuit.if(startOfMonths[j]
+          .gte(tx.timestamp.value)
+          .and(startOfMonths[j - 1].lt(tx.timestamp.value)).and(tx.transactionType.isIncome()), 
+          this.updateIncome(totalIncome, startOfMonths[j - 1], monthlyIncomes, tx), totalIncome);
+      }
+    }
+
+    let avgMonthlyIncome = new Int64(totalIncome.value.div(numMonthsToTakeIntoAccount)); // not 100% accurate
+    console.log(totalIncome, avgMonthlyIncome);
     return requiredProof.lowerBound.value.lte(avgMonthlyIncome.value)
     .and(requiredProof.upperBound.value.gt(avgMonthlyIncome.value));
+  }
+
+
+  updateIncome(totalIncome: Int64, month: Field, monthlyIncomes: Map<Field, Field>, tx: Transaction): Int64 {
+    let previous = monthlyIncomes.get(month);
+    if (previous == null) {
+      monthlyIncomes.set(month, tx.amount.value);
+    } else {
+      monthlyIncomes.set(month, previous.add(tx.amount.value));
+    }
+    return totalIncome.add(tx.amount);
   }
 
 }
@@ -183,7 +224,6 @@ export class RequiredProof extends CircuitValue  {
 
 }
 
-await isReady;
 const MAX_REQUIRED_PROOFS = 10;
 export class RequiredProofs extends CircuitValue {
   @arrayProp(RequiredProof, MAX_REQUIRED_PROOFS) requiredProofs: Array<RequiredProof>;

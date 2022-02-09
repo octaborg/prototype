@@ -40,12 +40,12 @@ async function testAccountStatement1() : Promise<AccountStatement> {
   return Promise.resolve(new AccountStatement(
     new Field(0),
     new UInt64(new Field(10000)),
-    new Int64(new Field(100)),
+    new Int64(new Field(100)), // timestamp
     new Int64(new Field(100)),
     new Int64(new Field(100)),
     [new Transaction(
       new Field(1), 
-      new Int64(new Field(100)), 
+      new Int64(new Field(5000)), // TODO adjust timestamp to pass tests
       new TransactionType(
         new Bool(true), 
         new Bool(false), 
