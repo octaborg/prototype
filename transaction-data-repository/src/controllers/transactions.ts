@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
+import { PrivateKey } from 'snarkyjs';
 
-import { Account, Transaction } from '../entity/payloads';
+import { Account, Transaction, AccountDecoded, AccountDecodedFlattened, AccountEncoded } from '../entity/payloads';
 import TransactionsModel from '../models/transactions';
 
 // getting all the transactions
@@ -23,4 +24,15 @@ const getAccount = async (req: Request, res: Response, next: NextFunction) => {
     return res.status(200).json(account);
 };
 
-export default { getTransactions, getTransaction, getAccount };
+const getAccountSigned = async (req: Request, res: Response, next: NextFunction) => {
+    let id: string = req.params.account;
+    const account: Account = await TransactionsModel.getDataAccount(0);
+    const account_decoded: AccountDecoded = account.toDecoded();
+    const account_decoded_flattened: AccountDecodedFlattened = AccountDecodedFlattened.fromAccountDecoded(account_decoded);
+    const private_key = PrivateKey.random();
+    account_decoded_flattened.sign(private_key);
+    const account_encoded_signed: AccountEncoded = account_decoded_flattened.toAccountEncoded();
+    return res.status(200).json(account_encoded_signed);
+};
+
+export default { getTransactions, getTransaction, getAccount, getAccountSigned };

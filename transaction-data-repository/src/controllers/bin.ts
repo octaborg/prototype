@@ -1,80 +1,79 @@
 import { Request, Response, NextFunction } from 'express';
-import { Field, Poseidon, Group, Scalar, PrivateKey, Signature } from 'snarkyjs';
+import { Bool, Field, Poseidon, Group, Scalar, PrivateKey, PublicKey, Signature } from 'snarkyjs';
+import { bytesToListBool, listFieldsToHex, hexToListFields, SignatureWrapper, GroupWrapper } from '../helpers/bin';
 
 import crypto from "crypto";
+
+interface ResponseSignature {
+    s: String,
+    r: String
+}
 
 interface ResponseObject {
     message: String;
     poseidon: String;
-    signature_r: String;
-    signature_s: String;
+    signature: ResponseSignature;
 }
-
-const sign = (hash: Field, private_key: PrivateKey, G: Group) => {
-    console.log("signing");
-}
-
-const verify = (hash: Field, signature: Field) => {
-    console.log("verifying");
-}
-
-
-const bytesToListBool = (input: Buffer) => {
-    const result: boolean[] = [];
-    for (let num of input) {
-        const base2: String = num.toString(2).padStart(8, '0');
-        for (let i = 0; i < base2.length; i++) {
-            const character = base2.charAt(i);
-            if (character === "0") {
-                result.push(true);
-            } else {
-                result.push(false);
-            }
-        }
-    }
-    return result;
-}
-
-
-const scalarToString = (input: Scalar) => {
-    let result: String = "";
-    const fields: Field[] = input.toFields();
-    for (let f of fields) {
-        result = result.concat(f.toString());
-    }
-    console.log(result)
-    const buf = Buffer.from(result, "binary");
-    return buf.readUInt32BE()
-}
-
-
-const stringToScalar = (input: String) => {
-    const num: number = Number(input);
-    const base2: String = num.toString(2);
-    console.log(base2);
-    return 0;
-}
-
 
 const getRandomValue = async (req: Request, res: Response, next: NextFunction) => {
-    const preimage_bytes = crypto.randomBytes(256);
-    const preimage_field = Field.ofBits(bytesToListBool(preimage_bytes));
-    const hash = Poseidon.hash([preimage_field]);
-
+    const f1 = Field.random();
+    const f2 = Field.random();
+    const f3 = Field.random();
+    const preimage = [f1, f2, f3];
+    const ashex = listFieldsToHex(preimage);
+    const hash = Poseidon.hash(preimage);
     const private_key = PrivateKey.random();
     const public_key = private_key.toPublicKey();
     const signature = Signature.create(private_key, [hash]);
-    const sss = signature.s.toFields();
-    const s = scalarToString(signature.s)
-    console.log(s, typeof s);
-    console.log(stringToScalar(s.toString()));
     let response: ResponseObject = {
-        "message": preimage_bytes.toString("hex"),
+        "message": ashex,
         "poseidon": hash.toString(),
-        "signature_r": signature.r.toString(),
-        "signature_s": s.toString()
+        "signature": {
+            "s": String(signature.s.toJSON()),
+            "r": String(signature.r.toJSON()),
+        }
     };
     return res.status(200).json(response);
 };
 
-export default { getRandomValue };
+const signPayload = async (req: Request, res: Response, next: NextFunction) => {
+    console.log(req.body);
+    const hex_message: String = req.body.message;
+    const message: Field[] = hexToListFields(hex_message);
+    // random key
+    const private_key = PrivateKey.random();
+    const public_key = private_key.toPublicKey();
+    const signature = Signature.create(private_key, message);
+    // prepare the response
+    return res.status(200).json({
+        "message": hex_message.toString(),
+        "public_key": public_key.toJSON(),
+        "signature": {
+            "s": String(signature.s.toJSON()),
+            "r": String(signature.r.toJSON())
+        }
+    });
+};
+
+const verifyPayloadSignature = async (req: Request, res: Response, next: NextFunction) => {
+    console.log(req.body);
+    const hex_message: String = req.body.message;
+    const hex_x: String = req.body.public_key.g.x;
+    const hex_y: String = req.body.public_key.g.y;
+    const hex_r: String = req.body.signature.r;
+    const hex_s: String = req.body.signature.s;
+    const message: Field[] = hexToListFields(hex_message);
+    const x: Field | null = Field.fromJSON(hex_x.toString());
+    const y: Field | null = Field.fromJSON(hex_y.toString());
+    const g: GroupWrapper = new GroupWrapper(x, y)
+    const public_key: PublicKey = new PublicKey(g);
+    const r: Field | null = Field.fromJSON(hex_r.toString());
+    const s: Scalar | null = Scalar.fromJSON(hex_s.toString());
+    const signature: SignatureWrapper = new SignatureWrapper(r, s);
+    const is_valid: Bool = signature.verify(public_key, message);
+    return res.status(200).json({
+        "result": is_valid.toBoolean()
+    });
+};
+
+export default { getRandomValue, signPayload, verifyPayloadSignature };

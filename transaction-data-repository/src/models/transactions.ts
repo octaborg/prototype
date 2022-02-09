@@ -2,49 +2,42 @@ import { Account, Transaction } from '../entity/payloads';
 
 const getDataTransactions = async () => {
     const transactions: [Transaction] = [
-        {
+        Transaction.fromObject({
             "id": 0,
             "amount": 12,
-            "sendingAccount": 1,
-            "receivingAccount": 0,
-            "kind": "credit",
-            "description": "salary",
+            "transactionType": "deposit",
             "timestamp": 0
-        }
+        })
     ];
     return transactions;
 };
 
 const getDataTransaction = async (id: Number) => {
-    const transaction: Transaction = {
+    const transaction: Transaction = Transaction.fromObject({
         "id": 0,
         "amount": 12,
-        "sendingAccount": 1,
-        "receivingAccount": 0,
-        "kind": "credit",
-        "description": "salary",
+        "transactionType": "deposit",
         "timestamp": 0
-    };
+    });
     return transaction;
 };
 
 const getDataAccount = async (id: Number) => {
-    const account: Account = {
+    const account: Account = Account.fromObject({
         "id": 0,
         "balance": 3242,
         "timestamp": 0,
+        "fromTimestamp": 0,
+        "toTimestamp": 0,
         "transactions": [
-            {
+            Transaction.fromObject({
                 "id": 0,
                 "amount": 12,
-                "sendingAccount": 1,
-                "receivingAccount": 0,
-                "kind": "credit",
-                "description": "salary",
+                "transactionType": "deposit",
                 "timestamp": 0
-            }
+            })
         ]
-    }
+    });
     return account;
 };
 
