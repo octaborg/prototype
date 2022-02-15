@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { PrivateKey } from 'snarkyjs';
 
 import { Account, Transaction, AccountDecoded, AccountDecodedFlattened, AccountEncoded } from '../entity/payloads';
+import { AccountStatement } from '../entity/octa';
+
 import TransactionsModel from '../models/transactions';
 
 // getting all the transactions

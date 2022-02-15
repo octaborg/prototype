@@ -2,6 +2,15 @@ import { Bool, Int64, UInt64, Field, Group, PrivateKey, PublicKey, Signature, Po
 
 import { listFieldsToHex, hexToListFields } from '../helpers/bin';
 
+/*
+
+  function toField(f: Field | null): Field {
+  if (f === null) throw Error()
+  return f;
+  }
+
+  */
+
 /* OCTA data types encoded */
 
 export interface SignatureEncoded {

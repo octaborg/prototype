@@ -4,6 +4,7 @@ import morgan from 'morgan';
 
 import transaction_routes from './routes/transactions';
 import bin_routes from './routes/bin';
+import octa_routes from './routes/octa';
 
 const router: Express = express();
 
@@ -31,6 +32,7 @@ router.use((req, res, next) => {
 /** Routes */
 router.use('/', transaction_routes);
 router.use('/', bin_routes);
+router.use('/', octa_routes);
 
 /** Error handling */
 router.use((req, res, next) => {
