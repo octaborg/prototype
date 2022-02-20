@@ -6,4 +6,4 @@ router.get('/api/bin', controller.getRandomValue);
 router.post('/api/bin/sign', controller.signPayload);
 router.post('/api/bin/verify', controller.verifyPayloadSignature);
 
-export = router;
+export default router;
