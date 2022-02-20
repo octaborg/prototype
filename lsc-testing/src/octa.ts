@@ -39,7 +39,7 @@ export class TransactionType extends CircuitValue {
   }
 
   isIncome() : Bool {
-    return this.deposit.and(this.transferIn);
+    return this.deposit.or(this.transferIn);
   }
 
 }
@@ -117,15 +117,17 @@ export class TransactionalProof {
     // TODO prevent same proof from being calculated multiple times
     let validated = new Bool(true);
     for (let i = 0; i < this.requiredProofs.requiredProofs.length; i++) {
-      validated = validated.and(Circuit.if(
+      validated = 
+      validated.and(Circuit.if(
         this.requiredProofs.requiredProofs[i].requiredProofType.equals(RequiredProofType.avgMonthlyBalanceProof()),
         this.validateAvgMonthlyBalanceProof(this.requiredProofs.requiredProofs[i]),
-        new Bool(true)));
-
-      validated = validated.and(Circuit.if(
+        new Bool(true))) 
+        && 
+      validated.and(Circuit.if(
         this.requiredProofs.requiredProofs[i].requiredProofType.equals(RequiredProofType.avgMonthlyIncomeProof()),
         this.validateAvgMonthlyIncomeProof(this.requiredProofs.requiredProofs[i]),
         new Bool(true)));
+        // && // other proof validations ....
     }
     validated.assertEquals(true);
   }
@@ -157,7 +159,10 @@ export class TransactionalProof {
       }
     }
 
-    let avgMonthlyIncome = new Int64(totalIncome.value.div(numMonthsToTakeIntoAccount)); // not 100% accurate
+    let avgMonthlyIncome = new Int64(totalIncome.value.div(numMonthsToTakeIntoAccount)); 
+    // TODO does not work
+    //let avgMonthlyIncome = new Int64(new Field(1500)); // Dummy value to make the tests past
+
     console.log(totalIncome, avgMonthlyIncome);
     return requiredProof.lowerBound.value.lte(avgMonthlyIncome.value)
     .and(requiredProof.upperBound.value.gt(avgMonthlyIncome.value));
