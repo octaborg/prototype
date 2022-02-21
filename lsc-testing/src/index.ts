@@ -85,6 +85,7 @@ async function deploy() {
       new Int64(new Field(100000)), 
       new Int64(new Field(3000)))]));
   });
+  
   await tx.send().wait();
   let tx1 = Mina.transaction(borrower, async () => {
     let sign = Signature.create(findataRepo, [new Field(1)]);
