@@ -1,5 +1,5 @@
 {
-  "name": "testing2",
+  "name": "lsc-testing",
   "version": "0.1.4",
   "description": "",
   "keywords": [],
@@ -9,7 +9,9 @@
   "main": "build/src/index.js",
   "types": "build/src/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "start": "node src/server.js & esbuild --watch --splitting --bundle ./src/App.tsx --outdir=./public/js --format=esm --target=esnext --define:process.env.NODE_ENV='\"development\"'",
+    "serve": "npm run build & node src/server.js & esbuild --watch --splitting --bundle ./src/App.tsx --outdir=./public/js --format=esm --target=esnext --define:process.env.NODE_ENV='\"development\"'",
+    "build": "tsc && esbuild --minify --splitting --bundle ./src/App.tsx --outdir=./public/js --format=esm --target=esnext --define:process.env.NODE_ENV='\"production\"'",
     "coverage": "node --experimental-vm-modules --experimental-wasm-modules --experimental-wasm-threads node_modules/.bin/jest --coverage",
     "format": "prettier --write --ignore-unknown **/*",
     "prepare": "husky install",
@@ -24,12 +26,19 @@
     ]
   },
   "dependencies": {
+    "@emotion/react": "^11.7.1",
+    "@emotion/styled": "^11.6.0",
+    "@mui/material": "^5.4.2",
+    "esbuild": "^0.14.2",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "snarkyjs": "^0.2.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.16.4",
     "@babel/preset-typescript": "^7.16.0",
     "@types/jest": "^27.0.3",
+    "@types/react-dom": "^17.0.11",
     "@typescript-eslint/eslint-plugin": "^5.5.0",
     "@typescript-eslint/parser": "^5.5.0",
     "eslint": "^8.7.0",
