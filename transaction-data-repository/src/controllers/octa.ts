@@ -30,9 +30,7 @@ const getOCTAAccountStatementSigned = async (req: Request, res: Response, next: 
 };
 
 const verifyOCTAAccountStatementSigned = async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.body);
     const account_signed: AccountStatementSigned = AccountStatementSigned.deserialize(req.body);
-    //BS.lol();
     return res.status(200).json({});
 };
 

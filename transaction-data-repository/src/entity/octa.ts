@@ -116,7 +116,6 @@ export class TransactionType extends CircuitValue {
   }
 
     static deserialize(input: TransactionTypeDefinition): TransactionType {
-        console.log('TransactionType');
         const purchase: Bool = Bool.Unsafe.ofField(castField(
             Field.fromJSON(input.purchase.toString())));
         const deposit: Bool = Bool.Unsafe.ofField(castField(
@@ -173,6 +172,8 @@ export class Transaction extends CircuitValue {
 
 }
 
+// normally only for this one we need to re-implement toJSON and fromJSON
+// as only this one has an @arrayProp
 export class AccountStatement extends CircuitValue {
   @prop id: Field;
   @prop balance: UInt64;
@@ -214,25 +215,19 @@ export class AccountStatement extends CircuitValue {
     }
 
     static deserialize(input: AccountStatementDefinition): AccountStatement {
-        console.log('AccountStatement');
         console.log(input.id.toString());
         console.log(input.id);
         console.log(Field.fromJSON(input.id.toString()));
         const id: Field = castField(
             Field.fromJSON(input.id.toString()));
-        console.log(' id ok') // .valueOf()
         const balance: UInt64 = new UInt64(castField(
             Field.fromJSON(input.balance.toString())));
-        console.log(' balance ok')
         const timestamp: Int64 = new Int64(castField(
             Field.fromJSON(input.timestamp.toString())));
-        console.log(' timestamp ok')
         const fromTimestamp: Int64 = new Int64(castField(
             Field.fromJSON(input.fromTimestamp.toString())));
-        console.log(' fromTimestamp ok')
         const toTimestamp: Int64 = new Int64(castField(
             Field.fromJSON(input.toTimestamp.toString())));
-        console.log(' toTimestamp ok')
         let transactions: Transaction[] = [];
         for (let i = 0; i < input.transactions.length; ++i) {
             console.log(i);
@@ -272,7 +267,6 @@ export class AccountStatementSigned extends CircuitValue {
     }
 
     static deserialize(input: AccountStatementSignedDefinition): AccountStatementSigned {
-        console.log('AccountStatementSigned');
         const _r: Field = castField(
             Field.fromJSON(input.signature.r.toString()));
         const _s: Scalar = castScalar(
@@ -284,7 +278,6 @@ export class AccountStatementSigned extends CircuitValue {
             Field.fromJSON(input.authorityPublicKey.g.x.toString()));
         const g: Group = new Group(_x, _y);
         const public_key: PublicKey = new PublicKey(g);
-        console.log('wohooooo');
         const statement: AccountStatement = AccountStatement.deserialize(input.statement);
         return new AccountStatementSigned(statement, public_key, signature);
     }
