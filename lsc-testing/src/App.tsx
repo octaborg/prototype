@@ -9,7 +9,8 @@ import MenuItem from '@mui/material/MenuItem';
 import FormHelperText from '@mui/material/FormHelperText';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import {RequiredProof, RequiredProofType} from '../dist/octa.js'
-import { Int64, Field } from 'snarkyjs';
+import { Int64, UInt64, Field } from 'snarkyjs';
+import { RequiredProofs } from './octa.js';
 
 let Loan;
 
@@ -20,19 +21,21 @@ new Int64(Field.zero));
 function NewLoan() {
   let [snapp, setSnapp] = useState();
   let [isLoading, setLoading] = useState(false);
-  let [isDeployed, setDeployed] = useState(false);
-  let [loanAmount, setLoanAmount] = useState("0");
-  let [interestRate, setInterestRate] = useState("0");
-  let [termInDays, setTermInDays] = useState("0");
-  let [requiredProofs, setRequiredProofs] = useState([defaultRequiredProof]);
+  let [loanAmount, setLoanAmount] = useState('0');
+  let [interestRate, setInterestRate] = useState('0');
+  let [termInDays, setTermInDays] = useState('0');
+  let [requiredProofs, setRequiredProofs] = useState([Object.assign({}, defaultRequiredProof)]);
 
   async function deploy() {
     if (isLoading) return;
     setLoading(true);
-    Loan = await import('../dist/loan.contract.js');
-    let snapp = await Loan.deploy();
+    Loan = Loan || await import('../dist/loan.contract.js');
+    let snapp = await Loan.deploy(
+      new UInt64(new Field(loanAmount)), 
+      new Field(interestRate), 
+      new Field(termInDays), 
+      new RequiredProofs(requiredProofs));
     setLoading(false);
-    setDeployed(true);
     setSnapp(snapp);
     let state = await snapp.getSnappState();
   }
@@ -44,32 +47,74 @@ function NewLoan() {
   }
 
   function mapRequiredProofToIndex(requiredProof: RequiredProof) {
-    if (requiredProof.requiredProofType.avgMonthlyIncomeProof) {
-      return 0;
+    if (requiredProof.requiredProofType.avgMonthlyIncomeProof.toBoolean()) {
+      return '0';
     }
-    if (requiredProof.requiredProofType.avgMonthlyBalanceProof) {
-      return 1;
+    if (requiredProof.requiredProofType.avgMonthlyBalanceProof.toBoolean()) {
+      return '1';
     }
+    return '0';
+  }
+
+  function mapIndexToRequiredProof(index: string) {
+    if (index == '0') {
+      return RequiredProofType.avgMonthlyIncomeProof();
+    }
+    if (index == '1') {
+      return RequiredProofType.avgMonthlyBalanceProof();
+    }
+    return RequiredProofType.avgMonthlyIncomeProof();
   }
 
   function addRequiredProof() {
-    setRequiredProofs([...requiredProofs, defaultRequiredProof])
+    setRequiredProofs([...requiredProofs, Object.assign({}, defaultRequiredProof)])
   }
 
-  function handleChange(event: SelectChangeEvent) {
-    // TODO
+  function handleLoanAmountChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setLoanAmount(event.target.value);
+  };
+
+  function handleInterestRateChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setInterestRate(event.target.value);
+  };
+
+  function handleTermInDaysChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setTermInDays(event.target.value);
+  };
+
+  function handleRequiredProofSelectChange(event : SelectChangeEvent) {
+    let index = event.target.name;
+    let value = event.target.value;
+    let edited = requiredProofs[parseInt(index)];
+    edited.requiredProofType = mapIndexToRequiredProof(value);
+    requiredProofs[parseInt(index)] = Object.assign({}, edited);
+    setRequiredProofs([...requiredProofs]);
+  }
+
+  function handleRequiredProofBoundChange(event: React.ChangeEvent<HTMLInputElement>) {
+    let index = event.target.name;
+    let id = event.target.id;
+    let value = event.target.value;
+    let edited = requiredProofs[parseInt(index)];
+    if (id == "lender-loan-required-proof-lower-bound-" + index) {
+      edited.lowerBound = new Int64(new Field(value));
+    }
+    if (id == "lender-loan-required-proof-upper-bound-" + index) {
+      edited.upperBound = new Int64(new Field(value));
+    }
+    requiredProofs[parseInt(index)] = Object.assign({}, edited);
+    
+    setRequiredProofs([...requiredProofs]);
   };
 
   return (
-    <Stack component="form"
-      noValidate
-      autoComplete="off">
+    <Stack>
       <Box sx={{
         '& > :not(style)': { m: 1, width: '25ch' },
       }}>
-        <TextField id="lender-loan-amount" label="Loan Amount" variant="outlined" value={loanAmount} />
-        <TextField id="lender-loan-interest-rate" label="Interest Rate" variant="outlined" value={interestRate} />
-        <TextField id="lender-loan-term" label="Term in Days" variant="outlined" value={termInDays} />
+        <TextField id="lender-loan-amount" label="Loan Amount" variant="outlined" value={loanAmount} onChange={handleLoanAmountChange} />
+        <TextField id="lender-loan-interest-rate" label="Interest Rate" variant="outlined" value={interestRate} onChange={handleInterestRateChange} />
+        <TextField id="lender-loan-term" label="Term in Days" variant="outlined" value={termInDays} onChange={handleTermInDaysChange} />
       </Box>
       {requiredProofs.map((requiredProof, index) => (
         <Box sx={{
@@ -80,13 +125,17 @@ function NewLoan() {
             labelId={"lender-required-proof-select-label-" + index}
             id={"lender-required-proof-select-" + index}
             value={mapRequiredProofToIndex(requiredProof)}
+            name={"" + index}
             label="Required Proof"
+            onChange={handleRequiredProofSelectChange}
           >
             <MenuItem value={0}>Average Monthly Income</MenuItem>
             <MenuItem value={1}>Average Monthly Balance</MenuItem>
           </Select>
-          <TextField id={"lender-loan-required-proof-lower-bound-" + index} label="Lower Bound" variant="outlined" value={requiredProof.lowerBound.toString()} />
-          <TextField id={"lender-loan-required-proof-upper-bound-" + index} label="Upper Bound" variant="outlined" value={requiredProof.upperBound.toString()} />
+          <TextField name={"" + index} id={"lender-loan-required-proof-lower-bound-" + index} 
+            label="Lower Bound" variant="outlined" value={requiredProof.lowerBound.toString()} onChange={handleRequiredProofBoundChange} />
+          <TextField name={"" + index} id={"lender-loan-required-proof-upper-bound-" + index} 
+            label="Upper Bound" variant="outlined" value={requiredProof.upperBound.toString()} onChange={handleRequiredProofBoundChange} />
         </Box>
       ))}
       <Box sx={{

@@ -16,6 +16,7 @@ import {
   Signature
 } from 'snarkyjs';
 import { AccountStatement, RequiredProof, RequiredProofs, RequiredProofType, Transaction, TransactionalProof, TransactionType } from './octa.js';
+import {Loan} from './loan.contract.js';
 
 // setup
 async function deploy() {
@@ -28,19 +29,20 @@ async function deploy() {
 
   const snappPrivkey = PrivateKey.random();
   let snappAddress = snappPrivkey.toPublicKey();
-  let snappInstance : LSC;
+  let snappInstance : Loan;
 
   console.log('Deploying Snapp...');
   let tx = Mina.transaction(lender, async () => {
     const initialBalance = UInt64.fromNumber(1000000);
     const p = await Party.createSigned(borrower);
     p.balance.subInPlace(initialBalance);
-    snappInstance = new LSC(snappAddress);
+    snappInstance = new Loan(snappAddress);
     snappInstance.deploy(initialBalance, new Field(1), new Field(365), 
-    new RequiredProofs([new RequiredProof(
-      RequiredProofType.avgMonthlyIncomeProof(), 
-      new Int64(new Field(100000)), 
-      new Int64(new Field(3000)))]));
+    // new RequiredProofs([new RequiredProof(
+    //   RequiredProofType.avgMonthlyIncomeProof(), 
+    //   new Int64(new Field(100000)), 
+    //   new Int64(new Field(3000)))])
+      );
   });
   
   await tx.send().wait();

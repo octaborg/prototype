@@ -18,32 +18,36 @@ import {
 
 import { AccountStatement, RequiredProof, RequiredProofs, RequiredProofType, Transaction, TransactionalProof, TransactionType } from './octa.js';
 
+export { Loan, deploy, requestLoan, getSnappState };
+
+await isReady;
+
 /**
  * Loan smart contract interface
  */
 class Loan extends SmartContract {
     @state(Field) interestRate = State<Field>();
     @state(Field) termInDays = State<Field>();
-    @state(RequiredProofs) requiredProofs = State<RequiredProofs>();
+    // @state(RequiredProofs) requiredProofs = State<RequiredProofs>();
 
     // Terms of the loan are injected at deployment. Called by the lender.
     deploy(
         loanAmount: UInt64,
         interestRate: Field,
         termInDays: Field,
-        requiredProofs: RequiredProofs
+        //requiredProofs: RequiredProofs
     ) {
         super.deploy();
         this.balance.addInPlace(loanAmount);
         this.interestRate.set(interestRate);
         this.termInDays.set(termInDays);
-        this.requiredProofs.set(requiredProofs);
+        //this.requiredProofs.set(requiredProofs);
     }
 
     // Request a loan with required proofs. Called by the borrower
     @method
     async requestLoan(amount: UInt64, accountStatement: AccountStatement) {
-        new TransactionalProof(accountStatement, await this.requiredProofs.get()).validate();
+        //new TransactionalProof(accountStatement, await this.requiredProofs.get()).validate();
 
     }
 
@@ -99,10 +103,14 @@ async function deploy(
         console.log('Deploying Loan Contract...');
         const p = await Party.createSigned(borrower);
         p.balance.subInPlace(loanAmount);
-        snapp.deploy(loanAmount, interestRate, termInDays, requiredProofs);
+        snapp.deploy(loanAmount, interestRate, termInDays/*, requiredProofs*/);
     });
-    await tx.send().wait();
 
+    try {
+        await tx.send().wait();
+    } catch (err) {
+        console.log('Deployment rejected!', err);
+    }
     isDeploying = null;
     return snappInterface;
 }
