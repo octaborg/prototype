@@ -2,7 +2,7 @@
   "main": "build/src/server.ts",
   "type": "module",
   "scripts": {
-      "dev": "nodemon -x node --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm src/server.ts",
+    "dev": "nodemon -x node --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm src/server.ts",
     "build": "rm -rf build/ && prettier --write source/ && tsc"
   },
   "dependencies": {
@@ -11,10 +11,10 @@
     "@types/morgan": "^1.9.3",
     "axios": "^0.25.0",
     "crypto": "^1.0.1",
-    "date-fns": "^2.28.0",
     "express": "^4.17.2",
     "morgan": "^1.10.0",
     "nodemon": "^2.0.15",
+    "octa-types": "file:../../octa-types",
     "protobufjs": "^6.11.2",
     "snarkyjs": "^0.2.0",
     "ts-node": "^10.4.0",

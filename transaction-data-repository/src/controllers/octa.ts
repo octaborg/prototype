@@ -6,7 +6,7 @@ import {
     Signature
 } from 'snarkyjs';
 
-import { AccountStatement, AccountStatementSigned } from "../entity/octa";
+import { AccountStatement } from "octa-types";
 
 import OCTAModel from '../models/octa';
 
@@ -14,12 +14,14 @@ const getOCTAAccountStatementSigned = async (req: Request, res: Response, next: 
     // get request parameters
     let id: string = req.params.account;
     // make random authority
-    const private_key = PrivateKey.random();
-    const public_key = private_key.toPublicKey();
+    const authorityPrivateKey = PrivateKey.random();
+    const authorityPublicKey = authorityPrivateKey.toPublicKey();
     // fetch data
     const account: AccountStatement = await OCTAModel.getOCTAAccountStatement(0);
     // sign the data
-    const signature: Signature = Signature.create(private_key, account.toFields());
+    // uncomment the following line to see some magic
+    // const signature: Signature = account.sign(authorityPrivateKey);
+    /*
     // construct the signed statement
     const account_signed: AccountStatementSigned = new AccountStatementSigned(
         account,
@@ -27,12 +29,12 @@ const getOCTAAccountStatementSigned = async (req: Request, res: Response, next: 
         signature
     );
     return res.status(200).json(account_signed.serialize());
+    */
+    return res.status(200).json({});
 };
 
 const verifyOCTAAccountStatementSigned = async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.body);
-    const account_signed: AccountStatementSigned = AccountStatementSigned.deserialize(req.body);
-    //BS.lol();
+    // const account_signed: AccountStatementSigned = AccountStatementSigned.deserialize(req.body);
     return res.status(200).json({});
 };
 
