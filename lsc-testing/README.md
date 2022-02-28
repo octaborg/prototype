@@ -1,4 +1,4 @@
-# Mina Snapp: Testing2
+# Mina Snapp: LSC Testing
 
 This template uses TypeScript.
 

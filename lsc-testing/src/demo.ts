@@ -16,49 +16,7 @@ import {
   Signature
 } from 'snarkyjs';
 import { AccountStatement, RequiredProof, RequiredProofs, RequiredProofType, Transaction, TransactionalProof, TransactionType } from './octa.js';
-
-/**
- * Loan smart contract interface
- */
-export default class LSC extends SmartContract {
-  @state(Field) interestRate = State<Field>();
-  @state(Field) termInDays = State<Field>();
-  @state(RequiredProofs) requiredProofs = State<RequiredProofs>();
-
-  // Terms of the loan are injected at deployment. Called by the lender.
-  deploy(
-    loanAmount: UInt64,
-    interestRate: Field,
-    termInDays: Field,
-    requiredProofs: RequiredProofs
-  ) {
-    super.deploy();
-    this.balance.addInPlace(loanAmount);
-    this.interestRate.set(interestRate);
-    this.termInDays.set(termInDays);
-    this.requiredProofs.set(requiredProofs);
-  }
-
-  // Request a loan with required proofs. Called by the borrower
-  @method 
-  async requestLoan(amount: UInt64, accountStatement: AccountStatement) {
-    new TransactionalProof(accountStatement, await this.requiredProofs.get()).validate();
-
-  }
-
-  // Approve the loan for the given address. Called by the lender.
-  // This would be useful when lenders optimize on the type of borrowers
-  // based on the demand and other factors.
-  @method 
-  async approve(address: PublicKey) {
-  }
-
-  // Accept the loan for the calling address. Called by the borrower.
-  @method 
-  async accept() {
-  }
-
-}
+import {Loan} from './loan.contract.js';
 
 // setup
 async function deploy() {
@@ -71,19 +29,20 @@ async function deploy() {
 
   const snappPrivkey = PrivateKey.random();
   let snappAddress = snappPrivkey.toPublicKey();
-  let snappInstance : LSC;
+  let snappInstance : Loan;
 
   console.log('Deploying Snapp...');
   let tx = Mina.transaction(lender, async () => {
     const initialBalance = UInt64.fromNumber(1000000);
     const p = await Party.createSigned(borrower);
     p.balance.subInPlace(initialBalance);
-    snappInstance = new LSC(snappAddress);
+    snappInstance = new Loan(snappAddress);
     snappInstance.deploy(initialBalance, new Field(1), new Field(365), 
-    new RequiredProofs([new RequiredProof(
-      RequiredProofType.avgMonthlyIncomeProof(), 
-      new Int64(new Field(100000)), 
-      new Int64(new Field(3000)))]));
+    // new RequiredProofs([new RequiredProof(
+    //   RequiredProofType.avgMonthlyIncomeProof(), 
+    //   new Int64(new Field(100000)), 
+    //   new Int64(new Field(3000)))])
+      );
   });
   
   await tx.send().wait();

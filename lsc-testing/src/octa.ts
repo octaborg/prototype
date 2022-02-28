@@ -24,7 +24,6 @@ export class TransactionType extends CircuitValue {
   @prop transferIn: Bool;
   @prop transaferOut: Bool;
 
-
   constructor(
     purchase: Bool,
     deposit: Bool,
@@ -160,6 +159,7 @@ export class TransactionalProof {
     }
 
     let avgMonthlyIncome = new Int64(totalIncome.value.div(numMonthsToTakeIntoAccount)); 
+    // Compare the aggregate amount instead of the divided value.
     // TODO does not work
     //let avgMonthlyIncome = new Int64(new Field(1500)); // Dummy value to make the tests past
 
@@ -225,7 +225,6 @@ export class RequiredProof extends CircuitValue  {
     this.upperBound = upperBound;
     this.lowerBound = lowerBound;
   }
-
 
 }
 
