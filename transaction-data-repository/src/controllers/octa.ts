@@ -1,14 +1,26 @@
 import { Request, Response, NextFunction } from 'express';
 
 import {
+    Field,
+    Bool,
+    Scalar,
+    Group,
     PrivateKey,
     PublicKey,
-    Signature
+    Signature,
+    JSONValue
 } from 'snarkyjs';
 
-import { AccountStatement } from "octa-types";
+import { AccountStatement, castScalar, castJSONValue } from "octa-types";
 
 import OCTAModel from '../models/octa';
+
+function castStringList(s: string | string[]): string {
+    if (typeof(s) === "string") {
+        return s;
+    }
+    return s[0];
+}
 
 const getOCTAAccountStatementSigned = async (req: Request, res: Response, next: NextFunction) => {
     // get request parameters
@@ -19,23 +31,35 @@ const getOCTAAccountStatementSigned = async (req: Request, res: Response, next: 
     // fetch data
     const account: AccountStatement = await OCTAModel.getOCTAAccountStatement(0);
     // sign the data
-    // uncomment the following line to see some magic
-    // const signature: Signature = account.sign(authorityPrivateKey);
-    /*
-    // construct the signed statement
-    const account_signed: AccountStatementSigned = new AccountStatementSigned(
-        account,
-        public_key,
-        signature
-    );
-    return res.status(200).json(account_signed.serialize());
-    */
-    return res.status(200).json({});
+    const signature: Signature = account.sign(authorityPrivateKey);
+    // prepare the response and headers
+    const x: Field = authorityPublicKey.g.x;
+    const y: Field = authorityPublicKey.g.y;
+    const r: Field = signature.r;
+    const s: JSONValue = castJSONValue(signature.s.toJSON());
+    res.set("r", r.toString());
+    res.set("s", s.toString());
+    res.set("x", x.toString());
+    res.set("y", y.toString());
+    return res.status(200).json(account.serialize());
 };
 
 const verifyOCTAAccountStatementSigned = async (req: Request, res: Response, next: NextFunction) => {
-    // const account_signed: AccountStatementSigned = AccountStatementSigned.deserialize(req.body);
-    return res.status(200).json({});
+    let payload: Field[] = [];
+    for (let j = 0; j < req.body.length; j++) {
+        const val: Field = new Field(req.body[j]);
+        payload.push(val);
+    }
+    const x: Field = new Field(castStringList(req.headers.x));
+    const y: Field = new Field(castStringList(req.headers.y));
+    const g: Group = new Group(x, y);
+    const r: Field = new Field(castStringList(req.headers.r));
+    const s: Scalar = castScalar(Scalar.fromJSON(req.headers.s));
+    const signature: Signature = new Signature(r, s);
+    const authorityPublicKey: PublicKey = new PublicKey(g);
+    const account: AccountStatement = AccountStatement.deserialize(payload);
+    const is_valid: Bool = account.verifySignature(authorityPublicKey, signature);
+    return res.status(200).json(is_valid.toBoolean());
 };
 
 export default { getOCTAAccountStatementSigned, verifyOCTAAccountStatementSigned };
