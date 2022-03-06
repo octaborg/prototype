@@ -18,7 +18,7 @@ import {
 
 import { AccountStatement, RequiredProof, RequiredProofs, RequiredProofType, Transaction, TransactionalProof, TransactionType } from './octa.js';
 
-export { Loan, deploy, requestLoan, getSnappState };
+export { Loan, deploy, requestLoan, getSnappState, getTestAccounts };
 
 await isReady;
 
@@ -28,26 +28,26 @@ await isReady;
 class Loan extends SmartContract {
     @state(Field) interestRate = State<Field>();
     @state(Field) termInDays = State<Field>();
-    // @state(RequiredProofs) requiredProofs = State<RequiredProofs>();
+    @state(RequiredProofs) requiredProofs = State<RequiredProofs>();
 
     // Terms of the loan are injected at deployment. Called by the lender.
     deploy(
         loanAmount: UInt64,
         interestRate: Field,
         termInDays: Field,
-        //requiredProofs: RequiredProofs
+        requiredProofs: RequiredProofs
     ) {
         super.deploy();
         this.balance.addInPlace(loanAmount);
         this.interestRate.set(interestRate);
         this.termInDays.set(termInDays);
-        //this.requiredProofs.set(requiredProofs);
+        this.requiredProofs.set(requiredProofs);
     }
 
     // Request a loan with required proofs. Called by the borrower
     @method
     async requestLoan(amount: UInt64, accountStatement: AccountStatement) {
-        //new TransactionalProof(accountStatement, await this.requiredProofs.get()).validate();
+        new TransactionalProof(accountStatement, await this.requiredProofs.get()).validate();
 
     }
 
@@ -74,7 +74,8 @@ const borrower = Local.testAccounts[1].privateKey;
 let isDeploying = null as null | {
     requestLoan(amount: UInt64, accountStatement: AccountStatement): Promise<void>;
     getSnappState(): Promise<{
-        num: Field;
+        interestRate: Field,
+        termInDays: Field 
     }>;
 };
 
@@ -101,9 +102,10 @@ async function deploy(
     );
     let tx = Mina.transaction(lender, async () => {
         console.log('Deploying Loan Contract...');
+        // const p = await Party.createSigned(lender); // TODO ask why this fails?
         const p = await Party.createSigned(borrower);
         p.balance.subInPlace(loanAmount);
-        snapp.deploy(loanAmount, interestRate, termInDays/*, requiredProofs*/);
+        snapp.deploy(loanAmount, interestRate, termInDays, requiredProofs);
     });
 
     try {
@@ -123,14 +125,19 @@ async function requestLoan(snappAddress: PublicKey, amount: UInt64, accountState
     try {
         await tx.send().wait();
     } catch (err) {
-        console.log('Update rejected!', err);
+        console.log('rejected!', err);
     }
 }
 
 async function getSnappState(snappAddress: PublicKey) {
     let snappState = (await Mina.getAccount(snappAddress)).snapp.appState;
     return {
-        num: snappState[0]
+        interestRate: snappState[0],
+        termInDays: snappState[1] 
     };
+}
+
+function getTestAccounts() {
+    return Local.testAccounts;
 }
 
