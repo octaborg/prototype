@@ -10,7 +10,6 @@ import FormHelperText from '@mui/material/FormHelperText';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import AppBar from '@mui/material/AppBar';
-import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { RequiredProof, RequiredProofType } from '../dist/octa.js'
@@ -43,6 +42,7 @@ function NewLoan() {
     setLoading(false);
     setSnapp(snapp);
     let state = await snapp.getSnappState();
+    console.log(state);
   }
 
   async function handleClick() {
@@ -77,15 +77,15 @@ function NewLoan() {
 
   function handleLoanAmountChange(event: React.ChangeEvent<HTMLInputElement>) {
     setLoanAmount(event.target.value);
-  };
+  }
 
   function handleInterestRateChange(event: React.ChangeEvent<HTMLInputElement>) {
     setInterestRate(event.target.value);
-  };
+  }
 
   function handleTermInDaysChange(event: React.ChangeEvent<HTMLInputElement>) {
     setTermInDays(event.target.value);
-  };
+  }
 
   function handleRequiredProofSelectChange(event: SelectChangeEvent) {
     let index = event.target.name;
@@ -110,7 +110,7 @@ function NewLoan() {
     requiredProofs[parseInt(index)] = Object.assign({}, edited);
 
     setRequiredProofs([...requiredProofs]);
-  };
+  }
 
   return (
     <Stack>
@@ -199,7 +199,7 @@ function App() {
 
   return (
     <Container fixed>
-      <AppBar position="static">
+      <Box position="static">
         <Tabs
           value={tab}
           onChange={handleChange}
@@ -208,7 +208,7 @@ function App() {
           <Tab label="Lend" {...a11yProps(0)} />
           <Tab label="Borrow" {...a11yProps(1)} />
         </Tabs>
-      </AppBar>
+      </Box>
       <TabPanel value={tab} index={0}>
         <NewLoan />
       </TabPanel>

@@ -80,7 +80,7 @@ let isDeploying = null as null | {
 };
 
 async function deploy(
-    loanAmount: UInt64,
+    loanAmount: UInt64, // Min 1000000
     interestRate: Field,
     termInDays: Field,
     requiredProofs: RequiredProofs) {

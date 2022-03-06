@@ -1,16 +1,8 @@
 import {
     Field,
-    PublicKey,
-    SmartContract,
-    state,
-    State,
-    method,
     UInt64,
     Int64,
-    Mina,
     isReady,
-    PrivateKey,
-    Party,
     shutdown,
     Bool,
     Signature
@@ -21,7 +13,6 @@ import {
     RequiredProofs,
     RequiredProofType,
     Transaction,
-    TransactionalProof,
     TransactionType
 } from './octa.js';
 import {Loan, deploy, getTestAccounts} from './loan.contract.js';
