@@ -10,141 +10,31 @@ npm run dev
 
 I made the protobuf message definitions using [types-as-schema](https://www.npmjs.com/package/types-as-schema)
 
-## Binary endpoint
+generate a secret identity
+
+```
+npm run identity
+```
 
 ### Producing a signature
 
-Say we want to sign a message `22F64844A5A8703B1FCDC3794A3C46FB5DAC8DC3953D56EC0E1E582C3A421E02` which corresponds to single Field as it is 32 bytes long.
+```
+curl -X GET \
+  http://127.0.0.1:6060/api/statement/sign/
+```
+
+Check headers for `s`, `r`, `x` and `y`.
+
+### Verifying signature
 
 ```
 curl -X POST \
-  http://127.0.0.1:6060/api/bin/sign \
-  -H 'Content-Type: application/json' \
-  -d '{
-	"message": "22F64844A5A8703B1FCDC3794A3C46FB5DAC8DC3953D56EC0E1E582C3A421E02"
-}'
-```
-
-responds with
-
-```
-{
-    "message": "22F64844A5A8703B1FCDC3794A3C46FB5DAC8DC3953D56EC0E1E582C3A421E02",
-    "public_key": {
-        "g": {
-            "x": "13970885179067814607154447503640693252502336289886406913311117794136382926396",
-            "y": "936739053817989325499878633856848644584314074363365320244824700802831723737"
-        }
-    },
-    "signature": {
-        "s": "28152743220804432302389329541171083660313036683022934833366094078752235636711",
-        "r": "23645393687493419657103339579028058596345736387992278401025980420953712797308"
-    }
-}
-```
-
-Messages need to be a multiple of 32 bytes in their lengths. Private key is random for each call.
-
-### Verifying a signature
-
-```
-curl -X POST \
-  http://127.0.0.1:6060/api/bin/verify \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "message": "22F64844A5A8703B1FCDC3794A3C46FB5DAC8DC3953D56EC0E1E582C3A421E02",
-    "public_key": {
-        "g": {
-            "x": "13970885179067814607154447503640693252502336289886406913311117794136382926396",
-            "y": "936739053817989325499878633856848644584314074363365320244824700802831723737"
-        }
-    },
-    "signature": {
-        "s": "28152743220804432302389329541171083660313036683022934833366094078752235636711",
-        "r": "23645393687493419657103339579028058596345736387992278401025980420953712797308"
-    }
-}'
-```
-
-responds with
-
-```
-{
-    "result": true
-}
-```
-
-## Open endpoint
-
-This endpoint reveals the confidential data. It follows specification from [4.4.1 Component: HTTPS API](https://github.com/octaborg/proposals/blob/main/OCTA-0.md#441-component-https-api)
-
-### /api/transactions
-
-Gives all the transactions.
-
-```
-http://127.0.0.1:6060/api/transactions
-```
-
-```
-[
-    {
-        "id": 0,
-        "amount": 12,
-        "sendingAccount": 1,
-        "receivingAccount": 0,
-        "kind": "credit",
-        "description": "salary",
-        "timestamp": 0
-    }
-]
-```
-
-### /api/transactions/:id
-
-Gives particular transaction.
-
-```
-http://127.0.0.1:6060/api/transactions/0
-```
-
-```
-{
-    "id": 0,
-    "amount": 12,
-    "sendingAccount": 1,
-    "receivingAccount": 0,
-    "kind": "credit",
-    "description": "salary",
-    "timestamp": 0
-}
-```
-
-### /api/transactions/account/:account
-
-Gives a statement of a particular account.
-
-```
-http://127.0.0.1:6060/api/transactions/account/0
-```
-
-```
-{
-    "id": 0,
-    "balance": 3242,
-    "timestamp": 0,
-    "transactions": [
-        {
-            "id": 0,
-            "amount": 12,
-            "sendingAccount": 1,
-            "receivingAccount": 0,
-            "kind": "credit",
-            "description": "salary",
-            "timestamp": 0
-        }
-    ]
-}
+  http://127.0.0.1:6060/api/statement/verify/ \
+  -H 'r: 23382549827258807343441558431627357150506254847627513526700232018278276868392' \
+  -H 's: 3731716699735328896172642992264607850758985845616052018809193997510176013263' \
+  -H 'x: 6593512490016519641306090621328677970727886495409708517080412864571159483879' \
+  -H 'y: 18389716606550903690263888571357944305390865801207581155180775587471033510853' \
+  -d '<payload here>'
 ```
 
 ## Some links

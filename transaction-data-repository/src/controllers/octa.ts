@@ -11,6 +11,10 @@ import {
     JSONValue
 } from 'snarkyjs';
 
+import config from '../config';
+
+const { authorityPrivateKeyString } = config;
+
 import { AccountStatement, castScalar, castJSONValue } from "octa-types";
 
 import OCTAModel from '../models/octa';
@@ -26,7 +30,8 @@ const getOCTAAccountStatementSigned = async (req: Request, res: Response, next: 
     // get request parameters
     let id: string = req.params.account;
     // make random authority
-    const authorityPrivateKey = PrivateKey.random();
+    const secret: Scalar = castScalar(Scalar.fromJSON(authorityPrivateKeyString));
+    const authorityPrivateKey = new PrivateKey(secret);
     const authorityPublicKey = authorityPrivateKey.toPublicKey();
     // fetch data
     const account: AccountStatement = await OCTAModel.getOCTAAccountStatement(0);
