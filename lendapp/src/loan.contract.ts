@@ -18,9 +18,25 @@ import {
 
 import { AccountStatement, RequiredProof, RequiredProofs, RequiredProofType, Transaction, TransactionalProof, TransactionType } from './octa.js';
 
-export { Loan, deploy, requestLoan, getSnappState, getTestAccounts };
+export { Loan, LoanData, deploy, requestLoan, getSnappState, getTestAccounts };
 
 await isReady;
+
+class LoanData {
+    availableToLend: UInt64;
+    interestRate: Field;
+    termInDays: Field;
+
+    constructor(
+        availableToLend: UInt64,
+        interestRate: Field,
+        termInDays: Field,) {
+            this.availableToLend = availableToLend;
+            this.interestRate = interestRate;
+            this.termInDays = termInDays;
+    }
+
+}
 
 /**
  * Loan smart contract interface
@@ -38,6 +54,7 @@ class Loan extends SmartContract {
         requiredProofs: RequiredProofs
     ) {
         super.deploy();
+        console.log(" =================", loanAmount.toString());
         this.balance.addInPlace(loanAmount);
         this.interestRate.set(interestRate);
         this.termInDays.set(termInDays);
@@ -73,10 +90,7 @@ const borrower = Local.testAccounts[1].privateKey;
 
 let isDeploying = null as null | {
     requestLoan(amount: UInt64, accountStatement: AccountStatement): Promise<void>;
-    getSnappState(): Promise<{
-        interestRate: Field,
-        termInDays: Field 
-    }>;
+    getSnappState(): Promise<LoanData>;
 };
 
 async function deploy(
@@ -104,8 +118,9 @@ async function deploy(
         console.log('Deploying Loan Contract...');
         // const p = await Party.createSigned(lender); // TODO ask why this fails?
         const p = await Party.createSigned(borrower);
-        p.balance.subInPlace(loanAmount);
-        snapp.deploy(loanAmount, interestRate, termInDays, requiredProofs);
+        const actualAmountWithFee = loanAmount.add(1000000); // TODO Adding the missing 1,000,0000, ask?
+        p.balance.subInPlace(actualAmountWithFee);
+        snapp.deploy(actualAmountWithFee, interestRate, termInDays, requiredProofs);
     });
 
     try {
@@ -130,11 +145,14 @@ async function requestLoan(snappAddress: PublicKey, amount: UInt64, accountState
 }
 
 async function getSnappState(snappAddress: PublicKey) {
-    let snappState = (await Mina.getAccount(snappAddress)).snapp.appState;
-    return {
-        interestRate: snappState[0],
-        termInDays: snappState[1] 
-    };
+    let account = await Mina.getAccount(snappAddress);
+    let snappState = account.snapp.appState;
+
+    return new LoanData(
+        account.balance,
+        snappState[0],
+        snappState[1] 
+    );
 }
 
 function getTestAccounts() {

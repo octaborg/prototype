@@ -11,6 +11,13 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import AppBar from '@mui/material/AppBar';
 import Typography from '@mui/material/Typography';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { RequiredProof, RequiredProofType } from '../dist/octa.js'
 import { Int64, UInt64, Field } from 'snarkyjs';
@@ -29,6 +36,7 @@ function NewLoan() {
   let [interestRate, setInterestRate] = useState('0');
   let [termInDays, setTermInDays] = useState('0');
   let [requiredProofs, setRequiredProofs] = useState([Object.assign({}, defaultRequiredProof)]);
+  let [availableLoans, setAvailableLoans] = useState(new Array<any>())
 
   async function deploy() {
     if (isLoading) return;
@@ -43,6 +51,7 @@ function NewLoan() {
     setSnapp(snapp);
     let state = await snapp.getSnappState();
     console.log(state);
+    setAvailableLoans([...availableLoans, state]);
   }
 
   async function handleClick() {
@@ -149,6 +158,7 @@ function NewLoan() {
         <Button variant="contained" onClick={addRequiredProof}>Add Required Proof</Button>
         <Button variant="contained" onClick={deploy}>Deploy Loan Contract</Button>
       </Box>
+      <LoanTable loanDataList={availableLoans}/>
     </Stack>);
 }
 
@@ -176,6 +186,41 @@ function TabPanel(props: TabPanelProps) {
         </Box>
       )}
     </div>
+  );
+}
+
+interface LoanTableProps {
+  children?: React.ReactNode;
+  loanDataList: Array<any>;
+}
+
+function LoanTable(props: LoanTableProps) {
+  const { loanDataList } = props;
+
+  return (
+    <TableContainer component={Paper}>
+      <Table sx={{ minWidth: 650 }} aria-label="available loan table">
+        <TableHead>
+          <TableRow>
+            <TableCell>Available Amount</TableCell>
+            <TableCell align="right">Interest Rate</TableCell>
+            <TableCell align="right">Term in Days</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {loanDataList.map((row) => (
+            <TableRow
+              key={row.availableToLend.value.toString()}
+              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+            >
+              <TableCell align="right">{row.availableToLend.value.toString()}</TableCell>
+              <TableCell align="right">{row.interestRate.toString()}</TableCell>
+              <TableCell align="right">{row.termInDays.toString()}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
 
