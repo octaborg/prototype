@@ -11,6 +11,10 @@ import {
     JSONValue
 } from 'snarkyjs';
 
+import config from '../config';
+
+const { authorityPrivateKeyString } = config;
+
 import { AccountStatement, castScalar, castJSONValue } from "octa-types";
 
 import OCTAModel from '../models/octa';
@@ -26,7 +30,8 @@ const getOCTAAccountStatementSigned = async (req: Request, res: Response, next: 
     // get request parameters
     let id: string = req.params.account;
     // make random authority
-    const authorityPrivateKey = PrivateKey.random();
+    const secret: Scalar = castScalar(Scalar.fromJSON(authorityPrivateKeyString));
+    const authorityPrivateKey = new PrivateKey(secret);
     const authorityPublicKey = authorityPrivateKey.toPublicKey();
     // fetch data
     const account: AccountStatement = await OCTAModel.getOCTAAccountStatement(0);
@@ -45,21 +50,26 @@ const getOCTAAccountStatementSigned = async (req: Request, res: Response, next: 
 };
 
 const verifyOCTAAccountStatementSigned = async (req: Request, res: Response, next: NextFunction) => {
-    let payload: Field[] = [];
-    for (let j = 0; j < req.body.length; j++) {
-        const val: Field = new Field(req.body[j]);
-        payload.push(val);
+    try {
+        let payload: Field[] = [];
+        for (let j = 0; j < req.body.length; j++) {
+            const val: Field = new Field(req.body[j]);
+            payload.push(val);
+        }
+        const x: Field = new Field(castStringList(req.headers.x));
+        const y: Field = new Field(castStringList(req.headers.y));
+        const g: Group = new Group(x, y);
+        const r: Field = new Field(castStringList(req.headers.r));
+        const s: Scalar = castScalar(Scalar.fromJSON(req.headers.s));
+        const signature: Signature = new Signature(r, s);
+        const authorityPublicKey: PublicKey = new PublicKey(g);
+        const account: AccountStatement = AccountStatement.deserialize(payload);
+        const is_valid: Bool = account.verifySignature(authorityPublicKey, signature);
+        return res.status(200).json(is_valid.toBoolean());
+    } catch (ex) {
+        // 422 - unprocessable entity - https://www.bennadel.com/blog/2434-http-status-codes-for-invalid-data-400-vs-422.htm
+        return res.status(422).json({})
     }
-    const x: Field = new Field(castStringList(req.headers.x));
-    const y: Field = new Field(castStringList(req.headers.y));
-    const g: Group = new Group(x, y);
-    const r: Field = new Field(castStringList(req.headers.r));
-    const s: Scalar = castScalar(Scalar.fromJSON(req.headers.s));
-    const signature: Signature = new Signature(r, s);
-    const authorityPublicKey: PublicKey = new PublicKey(g);
-    const account: AccountStatement = AccountStatement.deserialize(payload);
-    const is_valid: Bool = account.verifySignature(authorityPublicKey, signature);
-    return res.status(200).json(is_valid.toBoolean());
 };
 
 export default { getOCTAAccountStatementSigned, verifyOCTAAccountStatementSigned };

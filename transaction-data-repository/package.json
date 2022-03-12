@@ -3,13 +3,15 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon -x node --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm src/server.ts",
-    "build": "rm -rf build/ && prettier --write source/ && tsc"
+      "build": "rm -rf build/ && prettier --write source/ && tsc",
+      "identity": "node --loader ts-node/esm ./gen_identity.ts "
   },
   "dependencies": {
     "@types/axios": "^0.14.0",
     "@types/express": "^4.17.13",
     "@types/morgan": "^1.9.3",
     "axios": "^0.25.0",
+    "config": "^3.3.7",
     "crypto": "^1.0.1",
     "express": "^4.17.2",
     "morgan": "^1.10.0",
@@ -19,5 +21,8 @@
     "snarkyjs": "^0.2.0",
     "ts-node": "^10.4.0",
     "typescript": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/config": "^0.0.41"
   }
 }
