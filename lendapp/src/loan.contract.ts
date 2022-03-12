@@ -16,24 +16,27 @@ import {
     Signature
 } from 'snarkyjs';
 
-import { AccountStatement, RequiredProof, RequiredProofs, RequiredProofType, Transaction, TransactionalProof, TransactionType } from './octa.js';
+import {AccountStatement, RequiredProofs, TransactionalProof} from './octa.js';
 
-export { Loan, LoanData, deploy, requestLoan, getSnappState, getTestAccounts };
+export {Loan, LoanData, deploy, requestLoan, getSnappState, getTestAccounts};
 
 await isReady;
 
 class LoanData {
+    address: PublicKey;
     availableToLend: UInt64;
     interestRate: Field;
     termInDays: Field;
 
     constructor(
+        address: PublicKey,
         availableToLend: UInt64,
         interestRate: Field,
         termInDays: Field,) {
-            this.availableToLend = availableToLend;
-            this.interestRate = interestRate;
-            this.termInDays = termInDays;
+        this.address = address;
+        this.availableToLend = availableToLend;
+        this.interestRate = interestRate;
+        this.termInDays = termInDays;
     }
 
 }
@@ -149,9 +152,10 @@ async function getSnappState(snappAddress: PublicKey) {
     let snappState = account.snapp.appState;
 
     return new LoanData(
+        snappAddress,
         account.balance,
         snappState[0],
-        snappState[1] 
+        snappState[1]
     );
 }
 
