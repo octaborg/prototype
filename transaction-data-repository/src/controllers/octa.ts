@@ -42,10 +42,11 @@ const getOCTAAccountStatementSigned = async (req: Request, res: Response, next: 
     const y: Field = authorityPublicKey.g.y;
     const r: Field = signature.r;
     const s: JSONValue = castJSONValue(signature.s.toJSON());
-    res.set("r", r.toString());
-    res.set("s", s.toString());
-    res.set("x", x.toString());
-    res.set("y", y.toString());
+    res.setHeader('r', r.toString());
+    res.setHeader('s', s.toString());
+    res.setHeader('x', x.toString());
+    res.setHeader('y', y.toString());
+    console.log(res.getHeaders());
     return res.status(200).json(account.serialize());
 };
 

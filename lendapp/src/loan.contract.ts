@@ -6,7 +6,6 @@ import {
     State,
     method,
     UInt64,
-    Int64,
     Mina,
     isReady,
     PrivateKey,
@@ -16,7 +15,7 @@ import {
     Signature
 } from 'snarkyjs';
 
-import {AccountStatement, RequiredProofs, TransactionalProof} from './octa.js';
+import {AccountStatement, RequiredProofs, TransactionalProof} from 'octa-types';
 
 export {Loan, LoanData, deploy, requestLoan, getSnappState, getTestAccounts};
 
@@ -66,8 +65,8 @@ class Loan extends SmartContract {
 
     // Request a loan with required proofs. Called by the borrower
     @method
-    async requestLoan(amount: UInt64, accountStatement: AccountStatement) {
-        new TransactionalProof(accountStatement, await this.requiredProofs.get()).validate();
+    async requestLoan(amount: UInt64, authorityPublicKey: PublicKey, signature: Signature, accountStatement: AccountStatement) {
+        new TransactionalProof(accountStatement, await this.requiredProofs.get()).validate(authorityPublicKey, signature);
 
     }
 
@@ -92,7 +91,7 @@ const lender = Local.testAccounts[0].privateKey;
 const borrower = Local.testAccounts[1].privateKey;
 
 let isDeploying = null as null | {
-    requestLoan(amount: UInt64, accountStatement: AccountStatement): Promise<void>;
+    requestLoan(amount: UInt64, authorityPublicKey: PublicKey, signature: Signature, accountStatement: AccountStatement): Promise<void>;
     getSnappState(): Promise<LoanData>;
 };
 
@@ -105,8 +104,8 @@ async function deploy(
     const snappPrivkey = PrivateKey.random();
     let snappAddress = snappPrivkey.toPublicKey();
     let snappInterface = {
-        requestLoan(amount: UInt64, accountStatement: AccountStatement) {
-            return requestLoan(snappAddress, amount, accountStatement);
+        requestLoan(amount: UInt64, authorityPublicKey: PublicKey, signature: Signature, accountStatement: AccountStatement) {
+            return requestLoan(snappAddress, amount, authorityPublicKey, signature, accountStatement);
         },
         getSnappState() {
             return getSnappState(snappAddress);
@@ -135,10 +134,14 @@ async function deploy(
     return snappInterface;
 }
 
-async function requestLoan(snappAddress: PublicKey, amount: UInt64, accountStatement: AccountStatement) {
+async function requestLoan(snappAddress: PublicKey,
+                           amount: UInt64,
+                           authorityPublicKey: PublicKey,
+                           signature: Signature,
+                           accountStatement: AccountStatement) {
     let snapp = new Loan(snappAddress);
-    let tx = Mina.transaction(lender, async () => {
-        await snapp.requestLoan(amount, accountStatement);
+    let tx = Mina.transaction(borrower, async () => {
+        await snapp.requestLoan(amount, authorityPublicKey, signature, accountStatement);
     });
     try {
         await tx.send().wait();

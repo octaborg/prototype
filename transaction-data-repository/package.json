@@ -3,8 +3,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon -x node --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm src/server.ts",
-      "build": "rm -rf build/ && prettier --write source/ && tsc",
-      "identity": "node --loader ts-node/esm ./gen_identity.ts "
+    "build": "rm -rf build/ && tsc",
+    "identity": "node --loader ts-node/esm ./gen_identity.ts "
   },
   "dependencies": {
     "@types/axios": "^0.14.0",
