@@ -30,7 +30,7 @@ async function deployT() {
             new Int64(new Field(3000)))]));
 
     let state = await snapp.getSnappState();
-    console.log(state);
+    // console.log(state);
 
     const findataRepo = getTestAccounts()[2].privateKey;
     let sign = Signature.create(findataRepo, [new Field(1)]);

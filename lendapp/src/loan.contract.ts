@@ -56,7 +56,6 @@ class Loan extends SmartContract {
         requiredProofs: RequiredProofs
     ) {
         super.deploy();
-        console.log(" =================", loanAmount.toString());
         this.balance.addInPlace(loanAmount);
         this.interestRate.set(interestRate);
         this.termInDays.set(termInDays);
