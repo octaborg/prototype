@@ -34,7 +34,7 @@ const getOCTAAccountStatementSigned = async (req: Request, res: Response, next: 
     const authorityPrivateKey = new PrivateKey(secret);
     const authorityPublicKey = authorityPrivateKey.toPublicKey();
     // fetch data
-    const account: AccountStatement = await OCTAModel.getOCTAAccountStatement(0);
+    const account: AccountStatement = await OCTAModel.getOCTAAccountStatement(parseInt(id));
     // sign the data
     const signature: Signature = account.sign(authorityPrivateKey);
     // prepare the response and headers
