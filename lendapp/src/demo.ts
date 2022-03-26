@@ -15,7 +15,7 @@ import {
     Transaction,
     TransactionType
 } from 'octa-types';
-import {Loan, deploy, getTestAccounts} from './loan.contract.js';
+import {Loan, deploy, requestLoan, getTestAccounts} from './loan.contract.js';
 
 await isReady;
 
@@ -34,12 +34,12 @@ async function deployT() {
 
     const findataRepo = getTestAccounts()[2].privateKey;
     let sign = Signature.create(findataRepo, [new Field(1)]);
-    snapp.requestLoan(new UInt64(new Field(100)), findataRepo.toPublicKey(), sign, new AccountStatement(
+    requestLoan(state.address, new UInt64(new Field(100)), findataRepo.toPublicKey(), sign, new AccountStatement(
         new Field(0),
         new UInt64(new Field(10000)),
-        new Int64(new Field(100)),
-        new Int64(new Field(100)),
-        new Int64(new Field(100)),
+        new UInt64(new Field(100)),
+        new UInt64(new Field(100)),
+        new UInt64(new Field(100)),
         [new Transaction(
             new Field(1),
             new Int64(new Field(100)),
@@ -49,9 +49,9 @@ async function deployT() {
                 new Bool(false),
                 new Bool(false)
             ),
-            new Int64(new Field(0)))
+            new UInt64(new Field(0)))
         ]
-    )).catch((e) => console.log(e));
+    ), state.requiredProofs).catch((e) => console.log(e));
 
     state = await snapp.getSnappState();
     console.log(state);

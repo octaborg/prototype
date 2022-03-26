@@ -26,12 +26,15 @@ class LoanData {
     availableToLend: UInt64;
     interestRate: Field;
     termInDays: Field;
+    requiredProofs: RequiredProofs;
 
     constructor(
         address: PublicKey,
         availableToLend: UInt64,
         interestRate: Field,
-        termInDays: Field,) {
+        termInDays: Field,
+        requiredProofs: RequiredProofs) {
+        this.requiredProofs = requiredProofs;
         this.address = address;
         this.availableToLend = availableToLend;
         this.interestRate = interestRate;
@@ -46,7 +49,12 @@ class LoanData {
 class Loan extends SmartContract {
     @state(Field) interestRate = State<Field>();
     @state(Field) termInDays = State<Field>();
-    @state(RequiredProofs) requiredProofs = State<RequiredProofs>();
+    requiredProofs: RequiredProofs;
+
+    constructor(address: PublicKey, requiredProofs: RequiredProofs) {
+        super(address);
+        this.requiredProofs = requiredProofs;
+    }
 
     // Terms of the loan are injected at deployment. Called by the lender.
     deploy(
@@ -59,13 +67,13 @@ class Loan extends SmartContract {
         this.balance.addInPlace(loanAmount);
         this.interestRate.set(interestRate);
         this.termInDays.set(termInDays);
-        this.requiredProofs.set(requiredProofs);
+        this.requiredProofs = requiredProofs;
     }
 
     // Request a loan with required proofs. Called by the borrower
     @method
     async requestLoan(amount: UInt64, authorityPublicKey: PublicKey, signature: Signature, accountStatement: AccountStatement) {
-        new TransactionalProof(accountStatement, await this.requiredProofs.get()).validate(authorityPublicKey, signature);
+        new TransactionalProof(accountStatement, this.requiredProofs).validate(authorityPublicKey, signature);
 
     }
 
@@ -104,22 +112,23 @@ async function deploy(
     let snappAddress = snappPrivkey.toPublicKey();
     let snappInterface = {
         requestLoan(amount: UInt64, authorityPublicKey: PublicKey, signature: Signature, accountStatement: AccountStatement) {
-            return requestLoan(snappAddress, amount, authorityPublicKey, signature, accountStatement);
+            return requestLoan(snappAddress, amount, authorityPublicKey, signature, accountStatement, requiredProofs);
         },
         getSnappState() {
-            return getSnappState(snappAddress);
+            return getSnappState(snappAddress, requiredProofs);
         },
     };
     isDeploying = snappInterface;
 
     let snapp = new Loan(
         snappAddress,
+        requiredProofs
     );
     let tx = Mina.transaction(lender, async () => {
         console.log('Deploying Loan Contract...');
         // const p = await Party.createSigned(lender); // TODO ask why this fails?
         const p = await Party.createSigned(borrower);
-        const actualAmountWithFee = loanAmount.add(1000000); // TODO Adding the missing 1,000,0000, ask?
+        const actualAmountWithFee = loanAmount.add(1000000); // Add the additional amount for account creation fee
         p.balance.subInPlace(actualAmountWithFee);
         snapp.deploy(actualAmountWithFee, interestRate, termInDays, requiredProofs);
     });
@@ -137,8 +146,9 @@ async function requestLoan(snappAddress: PublicKey,
                            amount: UInt64,
                            authorityPublicKey: PublicKey,
                            signature: Signature,
-                           accountStatement: AccountStatement) {
-    let snapp = new Loan(snappAddress);
+                           accountStatement: AccountStatement,
+                           requiredProofs: RequiredProofs) {
+    let snapp = new Loan(snappAddress, requiredProofs);
     let tx = Mina.transaction(borrower, async () => {
         await snapp.requestLoan(amount, authorityPublicKey, signature, accountStatement);
     });
@@ -149,7 +159,7 @@ async function requestLoan(snappAddress: PublicKey,
     }
 }
 
-async function getSnappState(snappAddress: PublicKey) {
+async function getSnappState(snappAddress: PublicKey, requiredProofs: RequiredProofs) {
     let account = await Mina.getAccount(snappAddress);
     let snappState = account.snapp.appState;
 
@@ -157,7 +167,8 @@ async function getSnappState(snappAddress: PublicKey) {
         snappAddress,
         account.balance,
         snappState[0],
-        snappState[1]
+        snappState[1],
+        requiredProofs
     );
 }
 

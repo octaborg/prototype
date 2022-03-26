@@ -30,7 +30,7 @@ import axios from "axios";
 let LoanContract;
 
 const LOAN_STORE = [];
-const TRANSACTION_DATA_REPOSITORY_URL: string = 'http://localhost:6060/api/statement/sign/';
+const TRANSACTION_DATA_REPOSITORY_URL: string = 'http://localhost:6060/api/statement/sign/1';
 
 const defaultRequiredProof = new RequiredProof(RequiredProofType.avgMonthlyIncomeProof(),
     new Int64(Field.zero),
@@ -79,7 +79,13 @@ function BorrowTable(props: BorrowTableProps) {
             console.log("\n\nis response signature valid?");
             console.log(is_valid.toBoolean());
             LoanContract = LoanContract || await import('../dist/loan.contract.js');
-            await LoanContract.requestLoan(loanContractToBorrowFrom.address, new UInt64(new Field(loanAmount)), authorityPublicKey, signature, account);
+            await LoanContract.requestLoan(
+                loanContractToBorrowFrom.address,
+                new UInt64(new Field(loanAmount)),
+                authorityPublicKey,
+                signature,
+                account,
+                loanContractToBorrowFrom.requiredProofs);
         } catch (exception) {
             console.log(`ERROR when processing loan request: ${exception}\n`);
         }
