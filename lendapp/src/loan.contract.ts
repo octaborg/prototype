@@ -15,7 +15,7 @@ import {
     Signature
 } from 'snarkyjs';
 
-import {AccountStatement, RequiredProofs, TransactionalProof} from 'octa-types';
+import {AccountStatement, RequiredProofs, TransactionalProof} from './octa.js';
 
 export {Loan, LoanData, deploy, requestLoan, getSnappState, getTestAccounts};
 
@@ -72,8 +72,14 @@ class Loan extends SmartContract {
 
     // Request a loan with required proofs. Called by the borrower
     @method
-    async requestLoan(amount: UInt64, authorityPublicKey: PublicKey, signature: Signature, accountStatement: AccountStatement) {
-        new TransactionalProof(accountStatement, this.requiredProofs).validate(authorityPublicKey, signature);
+    async requestLoan(
+        borrower: PublicKey,
+        amount: UInt64,
+        authorityPublicKey: PublicKey,
+        signature: Signature,
+        accountStatement: AccountStatement) {
+        await new TransactionalProof(accountStatement, this.requiredProofs).validate(authorityPublicKey, signature);
+        //this.balance.subInPlace(amount);
 
     }
 
@@ -150,7 +156,7 @@ async function requestLoan(snappAddress: PublicKey,
                            requiredProofs: RequiredProofs) {
     let snapp = new Loan(snappAddress, requiredProofs);
     let tx = Mina.transaction(borrower, async () => {
-        await snapp.requestLoan(amount, authorityPublicKey, signature, accountStatement);
+        await snapp.requestLoan(borrower.toPublicKey(), amount, authorityPublicKey, signature, accountStatement);
     });
     try {
         await tx.send().wait();

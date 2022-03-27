@@ -24,7 +24,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import {Int64, UInt64, Field, Poseidon, Group, Scalar, Signature, PublicKey, Bool} from 'snarkyjs';
-import {AccountStatement, castScalar, RequiredProofs, RequiredProof, RequiredProofType} from "octa-types";
+import {AccountStatement, castScalar, RequiredProofs, RequiredProof, RequiredProofType} from "./octa.js";
 import axios from "axios";
 
 let LoanContract;
