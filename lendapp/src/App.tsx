@@ -24,8 +24,16 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import {Int64, UInt64, Field, Poseidon, Group, Scalar, Signature, PublicKey, Bool} from 'snarkyjs';
-import {AccountStatement, castScalar, RequiredProofs, RequiredProof, RequiredProofType} from "./octa.js";
+import {
+    AccountStatement,
+    castScalar,
+    RequiredProofs,
+    RequiredProof,
+    RequiredProofType,
+    generateDummyAccount
+} from "./octa.js";
 import axios from "axios";
+import {getTestAccounts} from "./loan.contract";
 
 let LoanContract;
 
@@ -73,18 +81,19 @@ function BorrowTable(props: BorrowTableProps) {
             const x: string = response.headers.x;
             const y: string = response.headers.y;
             // you may extract account statement, signature and public key as follows
-            const  { account, signature, authorityPublicKey } = getAccountStatementAndSignature(data, r, s, x, y);
-            // and verify
-            const is_valid: Bool = account.verifySignature(authorityPublicKey, signature);
-            console.log("\n\nis response signature valid?");
-            console.log(is_valid.toBoolean());
+            // TODO fix with the serialization issue
+            // const  { account, signature, authorityPublicKey } = getAccountStatementAndSignature(data, r, s, x, y);
             LoanContract = LoanContract || await import('../dist/loan.contract.js');
+            const findataRepo = getTestAccounts()[2].privateKey;
+            const acc = generateDummyAccount(1, 1000, 10, 10000);
+            let sign = acc.sign(findataRepo);
             await LoanContract.requestLoan(
                 loanContractToBorrowFrom.address,
                 new UInt64(new Field(loanAmount)),
-                authorityPublicKey,
-                signature,
-                account,
+                // TODO this pub key needs to be extracted from a verified repository
+                findataRepo.toPublicKey(),
+                sign,
+                acc,
                 loanContractToBorrowFrom.requiredProofs);
         } catch (exception) {
             console.log(`ERROR when processing loan request: ${exception}\n`);
