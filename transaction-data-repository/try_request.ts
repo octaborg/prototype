@@ -37,7 +37,7 @@ function getAccountStatementAndSignature(data: string[], dr: string, ds: string,
     return { account, signature, authorityPublicKey };
 }
 
-const url: string = 'http://127.0.0.1:6060/api/statement/sign/';
+const url: string = 'http://127.0.0.1:6060/api/statement/sign/0';
 try {
     const response = await axios.get(url);
     console.log("\n\nResponse payload and headers");
@@ -51,9 +51,17 @@ try {
     // you may extract account statement, signature and public key as follows
     const  { account, signature, authorityPublicKey } = getAccountStatementAndSignature(data, r, s, x, y);
     // and verify
+    console.log('verifying the signature');
     const is_valid: Bool = account.verifySignature(authorityPublicKey, signature);
     console.log("\n\nis response signature valid?");
     console.log(is_valid.toBoolean());
 } catch (exception) {
+    if (axios.isAxiosError(exception))  {
+        // Access to config, request, and response
+        console.log(exception.toJSON());
+    } else {
+        // Just a stock error
+        console.log('not axios error');
+    }
     process.stderr.write(`ERROR received from ${url}: ${exception}\n`);
 }

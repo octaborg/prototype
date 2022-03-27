@@ -79,7 +79,7 @@ function getAccountStatementAndSignature(data: string[], dr: string, ds: string,
     return { account, signature, authorityPublicKey };
 }
 
-const url: string = 'http://127.0.0.1:6060/api/statement/sign/';
+const url: string = 'http://127.0.0.1:6060/api/statement/sign/0';
 try {
     const response = await axios.get(url);
     console.log("\n\nResponse payload and headers");
