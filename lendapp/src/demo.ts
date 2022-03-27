@@ -8,14 +8,14 @@ import {
     Signature
 } from 'snarkyjs';
 import {
-    AccountStatement,
+    AccountStatement, generateDummyAccount,
     RequiredProof,
     RequiredProofs,
     RequiredProofType,
     Transaction,
     TransactionType
-} from 'octa-types';
-import {Loan, deploy, getTestAccounts} from './loan.contract.js';
+} from './octa.js';
+import {Loan, deploy, requestLoan, getTestAccounts} from './loan.contract.js';
 
 await isReady;
 
@@ -26,35 +26,24 @@ async function deployT() {
     let snapp = await deploy(initialBalance, new Field(1), new Field(365),
         new RequiredProofs([new RequiredProof(
             RequiredProofType.avgMonthlyIncomeProof(),
-            new Int64(new Field(100000)),
-            new Int64(new Field(3000)))]));
+            new Int64(new Field(1000)),
+            new Int64(new Field(500)))]));
 
     let state = await snapp.getSnappState();
     // console.log(state);
 
     const findataRepo = getTestAccounts()[2].privateKey;
-    let sign = Signature.create(findataRepo, [new Field(1)]);
-    snapp.requestLoan(new UInt64(new Field(100)), findataRepo.toPublicKey(), sign, new AccountStatement(
-        new Field(0),
-        new UInt64(new Field(10000)),
-        new Int64(new Field(100)),
-        new Int64(new Field(100)),
-        new Int64(new Field(100)),
-        [new Transaction(
-            new Field(1),
-            new Int64(new Field(100)),
-            new TransactionType(
-                new Bool(true),
-                new Bool(false),
-                new Bool(false),
-                new Bool(false)
-            ),
-            new Int64(new Field(0)))
-        ]
-    )).catch((e) => console.log(e));
+    const acc = generateDummyAccount(1, 1000, 10, 10000);
+    let sign = acc.sign(findataRepo);
+    await requestLoan(state.address, new UInt64(new Field(100)),
+        findataRepo.toPublicKey(),
+        sign,
+        acc,
+        state.requiredProofs)
+        .catch((e) => console.log(e));
 
     state = await snapp.getSnappState();
-    console.log(state);
+    console.log('=============== End ================', state.availableToLend.value.toString());
 }
 
 deployT();
