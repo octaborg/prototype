@@ -87,6 +87,9 @@ function BorrowTable(props: BorrowTableProps) {
             const account = generateDummyAccount(1, 1000, 10, 10000);
             let sign = account.sign(findataRepo);
             LoanContract = LoanContract || await import('../dist/loan.contract.js');
+            let state = await  LoanContract.getSnappState(loanContractToBorrowFrom.address,
+                loanContractToBorrowFrom.requiredProofs);
+            console.log('Available to Lend: Before', state.availableToLend.value.toString())
             await LoanContract.requestLoan(
                 loanContractToBorrowFrom.address,
                 new UInt64(new Field(loanAmount)),
@@ -95,6 +98,9 @@ function BorrowTable(props: BorrowTableProps) {
                 sign,
                 account,
                 loanContractToBorrowFrom.requiredProofs);
+            state = await  LoanContract.getSnappState(loanContractToBorrowFrom.address,
+                loanContractToBorrowFrom.requiredProofs);
+            console.log('Available to Lend: After', state.availableToLend.value.toString())
         } catch (exception) {
             console.log(`ERROR when processing loan request: ${exception}\n`);
         }

@@ -278,7 +278,6 @@ export class TransactionalProof {
     const tf = Math.floor(today.getTime() / 1000);
     const t0: number = tf - sdelta;
     let S: Int64 = this.account.balanceIntegral(t0, tf);
-    console.log(S.toString());
     let n: UInt64 = this.account.txCount(t0, tf);
     let L: Field = requiredProof.lowerBound.value.mul(n.value);
     let U: Field = requiredProof.upperBound.value.mul(n.value);
@@ -323,9 +322,14 @@ export class TransactionalProof {
     let avgMonthlyIncome = new Int64(
       totalIncome.value.div(numMonthsToTakeIntoAccount)
     );
+    Circuit.asProver(() => {
+      console.log('Income', avgMonthlyIncome.value.toString())
+      console.log('required income lower bound', requiredProof.lowerBound.value.toString())
+      console.log('required income upper bound', requiredProof.upperBound.value.toString())
+    });
     return requiredProof.lowerBound.value
-      .lte(avgMonthlyIncome.value)
-      .and(requiredProof.upperBound.value.gt(avgMonthlyIncome.value));
+      .lt(avgMonthlyIncome.value)
+      .and(requiredProof.upperBound.value.gte(avgMonthlyIncome.value));
   }
 
   updateIncome(
@@ -428,12 +432,12 @@ export function makeDummyPurchases(
   return transactions;
 }
 
-export async function generateDummyAccount(
+export function generateDummyAccount(
   _id: number,
   income: number,
   daily_expense: number,
   final_balance: number
-): Promise<AccountStatement> {
+): AccountStatement {
   const today = new Date();
   const now: number = Math.floor(today.getTime() / 1000);
   const snappPrivkey = PrivateKey.random();
@@ -470,14 +474,12 @@ export async function generateDummyAccount(
     );
     start_id = start_id + 30;
   }
-  return Promise.resolve(
-    new AccountStatement(
+  return new AccountStatement(
       new Field(_id),
       new UInt64(new Field(final_balance)),
       new UInt64(new Field(now)), // timestamp
       new UInt64(new Field(now - months * 30 * 24 * 60 * 60 - 1)),
       new UInt64(new Field(now + 1)),
       transactions
-    )
-  );
+    );
 }
