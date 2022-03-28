@@ -1,24 +1,45 @@
-# Mina Snapp: LSC Testing
+# Mina Snapp: demonstrate serialization issue in the browser
 
-This template uses TypeScript.
-
-## How to build
+## Run via node
 
 ```sh
-npm run build
+node --loader ts-node/esm ./try_serialization_reproduce.ts 
 ```
 
-## How to run tests
+expected output is
 
-```sh
-npm run test
-npm run testw # watch mode
+```
+0
+1242
+[ '0', '1242' ]
+deserialization of ExampleCircuit succeeded
+0
+1242
+0
+1242
+[ '0', '1242' ]
+deserialization of AnotherCircuit succeeded
+0
+1242
 ```
 
-## How to run coverage
+## Run in the browser
 
 ```sh
-npm run coverage
+npm run serve
+```
+
+then open http://127.0.0.1:3000 in your browser and check console logs. Instead of the above output you should get:
+
+```
+0
+1242
+[ '0', '1242' ]
+deserialization of ExampleCircuit failed
+0
+1242
+[ '0', '1242' ]
+deserialization of AnotherCircuit failed
 ```
 
 ## License
