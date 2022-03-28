@@ -8,6 +8,9 @@ export default {
       useESM: true,
     },
   },
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
   transform: {
     '^.+\\.(t)s$': 'ts-jest',
     '^.+\\.(j)s$': 'babel-jest',

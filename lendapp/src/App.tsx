@@ -82,10 +82,10 @@ function BorrowTable(props: BorrowTableProps) {
             const y: string = response.headers.y;
             // you may extract account statement, signature and public key as follows
             // TODO fix with the serialization issue
-            // const  { account, signature, authorityPublicKey } = getAccountStatementAndSignature(data, r, s, x, y);
+            const  { account, signature, authorityPublicKey } = getAccountStatementAndSignature(data, r, s, x, y);
             const findataRepo = getTestAccounts()[2].privateKey;
-            const account = generateDummyAccount(1, 1000, 10, 10000);
-            let sign = account.sign(findataRepo);
+            const acc = generateDummyAccount(1, 1000, 10, 10000);
+            let sign = acc.sign(findataRepo);
             LoanContract = LoanContract || await import('../dist/loan.contract.js');
             let state = await  LoanContract.getSnappState(loanContractToBorrowFrom.address,
                 loanContractToBorrowFrom.requiredProofs);
@@ -96,7 +96,7 @@ function BorrowTable(props: BorrowTableProps) {
                 // TODO this pub key needs to be extracted from a verified repository
                 findataRepo.toPublicKey(),
                 sign,
-                account,
+                acc,
                 loanContractToBorrowFrom.requiredProofs);
             state = await  LoanContract.getSnappState(loanContractToBorrowFrom.address,
                 loanContractToBorrowFrom.requiredProofs);
@@ -418,8 +418,7 @@ function castStringList(s: string | string[]): string {
 function getAccountStatementAndSignature(data: string[], dr: string, ds: string, dx: string, dy: string) {
     let payload: Field[] = [];
     for (let j = 0; j < data.length; j++) {
-        const val: Field = new Field(data[j]);
-        payload.push(val);
+        payload.push(new Field(data[j]));
     }
     const x: Field = new Field(castStringList(dx));
     const y: Field = new Field(castStringList(dy));
@@ -429,6 +428,7 @@ function getAccountStatementAndSignature(data: string[], dr: string, ds: string,
     const signature: Signature = new Signature(r, s);
     const authorityPublicKey: PublicKey = new PublicKey(g);
     const account: AccountStatement = AccountStatement.deserialize(payload);
+    console.log(account);
     return { account, signature, authorityPublicKey };
 }
 
