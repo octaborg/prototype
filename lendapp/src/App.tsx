@@ -71,18 +71,18 @@ function BorrowTable(props: BorrowTableProps) {
 
     async function constructProofsAndRequestLoan() {
         try {
-            const response = await axios.get(TRANSACTION_DATA_REPOSITORY_URL);
-            console.log("\n\nResponse payload and headers");
-            console.log(response.data);
-            console.log(response.headers);
-            const data: string[] = response.data;
-            const r: string = response.headers.r;
-            const s: string = response.headers.s;
-            const x: string = response.headers.x;
-            const y: string = response.headers.y;
-            // you may extract account statement, signature and public key as follows
-            // TODO fix with the serialization issue
-            const  { account, signature, authorityPublicKey } = getAccountStatementAndSignature(data, r, s, x, y);
+            // const response = await axios.get(TRANSACTION_DATA_REPOSITORY_URL);
+            // console.log("\n\nResponse payload and headers");
+            // console.log(response.data);
+            // console.log(response.headers);
+            // const data: string[] = response.data;
+            // const r: string = response.headers.r;
+            // const s: string = response.headers.s;
+            // const x: string = response.headers.x;
+            // const y: string = response.headers.y;
+            // // you may extract account statement, signature and public key as follows
+            // // TODO fix with the serialization issue
+            // const  { account, signature, authorityPublicKey } = getAccountStatementAndSignature(data, r, s, x, y);
             const findataRepo = getTestAccounts()[2].privateKey;
             const acc = generateDummyAccount(1, 1000, 10, 10000);
             let sign = acc.sign(findataRepo);
