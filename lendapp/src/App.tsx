@@ -83,17 +83,17 @@ function BorrowTable(props: BorrowTableProps) {
             // you may extract account statement, signature and public key as follows
             // TODO fix with the serialization issue
             // const  { account, signature, authorityPublicKey } = getAccountStatementAndSignature(data, r, s, x, y);
-            LoanContract = LoanContract || await import('../dist/loan.contract.js');
             const findataRepo = getTestAccounts()[2].privateKey;
-            const acc = generateDummyAccount(1, 1000, 10, 10000);
-            let sign = acc.sign(findataRepo);
+            const account = generateDummyAccount(1, 1000, 10, 10000);
+            let sign = account.sign(findataRepo);
+            LoanContract = LoanContract || await import('../dist/loan.contract.js');
             await LoanContract.requestLoan(
                 loanContractToBorrowFrom.address,
                 new UInt64(new Field(loanAmount)),
                 // TODO this pub key needs to be extracted from a verified repository
                 findataRepo.toPublicKey(),
                 sign,
-                acc,
+                account,
                 loanContractToBorrowFrom.requiredProofs);
         } catch (exception) {
             console.log(`ERROR when processing loan request: ${exception}\n`);

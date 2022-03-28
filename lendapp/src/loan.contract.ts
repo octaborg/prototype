@@ -78,9 +78,9 @@ class Loan extends SmartContract {
         authorityPublicKey: PublicKey,
         signature: Signature,
         accountStatement: AccountStatement) {
-        await new TransactionalProof(accountStatement, this.requiredProofs).validate(authorityPublicKey, signature);
-        //this.balance.subInPlace(amount);
-
+        new TransactionalProof(accountStatement, this.requiredProofs)
+            .validate(authorityPublicKey, signature);
+        this.balance.subInPlace(amount);
     }
 
     // Approve the loan for the given address. Called by the lender.
@@ -157,6 +157,8 @@ async function requestLoan(snappAddress: PublicKey,
     let snapp = new Loan(snappAddress, requiredProofs);
     let tx = Mina.transaction(borrower, async () => {
         await snapp.requestLoan(borrower.toPublicKey(), amount, authorityPublicKey, signature, accountStatement);
+        const borrowerParty = await Party.createSigned(borrower);
+        borrowerParty.balance.addInPlace(amount);
     });
     try {
         await tx.send().wait();
