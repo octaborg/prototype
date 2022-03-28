@@ -141,7 +141,7 @@ export class AccountStatement extends CircuitValue {
   @prop timestamp: UInt64;
   @prop fromTimestamp: UInt64;
   @prop toTimestamp: UInt64;
-  @arrayProp(Transaction, 100) transactions: Transaction[];
+  @arrayProp(Transaction, 30) transactions: Transaction[];
 
   constructor(
     id: Field,
@@ -278,6 +278,7 @@ export class TransactionalProof {
     const tf = Math.floor(today.getTime() / 1000);
     const t0: number = tf - sdelta;
     let S: Int64 = this.account.balanceIntegral(t0, tf);
+    console.log(S.toString());
     let n: UInt64 = this.account.txCount(t0, tf);
     let L: Field = requiredProof.lowerBound.value.mul(n.value);
     let U: Field = requiredProof.upperBound.value.mul(n.value);
@@ -322,14 +323,9 @@ export class TransactionalProof {
     let avgMonthlyIncome = new Int64(
       totalIncome.value.div(numMonthsToTakeIntoAccount)
     );
-    Circuit.asProver(() => {
-      console.log('Income', avgMonthlyIncome.value.toString())
-      console.log('required income lower bound', requiredProof.lowerBound.value.toString())
-      console.log('required income upper bound', requiredProof.upperBound.value.toString())
-    });
     return requiredProof.lowerBound.value
-      .lt(avgMonthlyIncome.value)
-      .and(requiredProof.upperBound.value.gte(avgMonthlyIncome.value));
+      .lte(avgMonthlyIncome.value)
+      .and(requiredProof.upperBound.value.gt(avgMonthlyIncome.value));
   }
 
   updateIncome(
@@ -406,71 +402,82 @@ export class RequiredProofs extends CircuitValue {
   }
 }
 
-export function generateDummyAccount(
-    _id: number,
-    income: number,
-    daily_expense: number,
-    final_balance: number,
-): AccountStatement {
+export function makeDummyPurchases(
+  value: number,
+  n: number,
+  s: number,
+  tstart: number,
+  tdelta: number
+): Transaction[] {
+  let transactions: Transaction[] = [];
+  for (let j = 0; j < n - 2; ++j) {
+    transactions.push(
+      new Transaction(
+        new Field(s + 1 + j),
+        new Int64(new Field(value)),
+        new TransactionType(
+          new Bool(true),
+          new Bool(false),
+          new Bool(false),
+          new Bool(false)
+        ),
+        new UInt64(new Field(tstart + tdelta * j))
+      )
+    );
+  }
+  return transactions;
+}
+
+export async function generateDummyAccount(
+  _id: number,
+  income: number,
+  daily_expense: number,
+  final_balance: number
+): Promise<AccountStatement> {
   const today = new Date();
   const now: number = Math.floor(today.getTime() / 1000);
+  const snappPrivkey = PrivateKey.random();
   const months: number = 3;
   let start_id: number = 0;
   const delta: number = 24 * 60 * 60; // one day
+  let pubkey = snappPrivkey.toPublicKey();
+  let sign = Signature.create(snappPrivkey, [new Field(1)]);
   let transactions: Transaction[] = [];
   for (let j = months; j > 0; --j) {
     const s: number = now - j * 30 * 24 * 60 * 60;
     start_id = start_id + 1;
     transactions.push(
-        new Transaction(
-            new Field(start_id),
-            new Int64(new Field(income)),
-            new TransactionType(
-                new Bool(false),
-                new Bool(true),
-                new Bool(true),
-                new Bool(false)
-            ),
-            new UInt64(new Field(s))
-        )
+      new Transaction(
+        new Field(start_id),
+        new Int64(new Field(income)),
+        new TransactionType(
+          new Bool(false),
+          new Bool(true),
+          new Bool(true),
+          new Bool(false)
+        ),
+        new UInt64(new Field(s))
+      )
     );
     transactions = transactions.concat(
-        makeDummyPurchases(daily_expense, 30, start_id, s, delta)
+      makeDummyPurchases(
+        daily_expense,
+        30 - transactions.length,
+        start_id,
+        s,
+        delta
+      )
     );
     start_id = start_id + 30;
   }
-  return new AccountStatement(
-          new Field(_id),
-          new UInt64(new Field(final_balance)),
-          new UInt64(new Field(now)), // timestamp
-          new UInt64(new Field(now - months * 30 * 24 * 60 * 60 - 1)),
-          new UInt64(new Field(now + 1)),
-          transactions
-      );
-}
-
-export function makeDummyPurchases(
-    value: number,
-    n: number,
-    s: number,
-    tstart: number,
-    tdelta: number
-): Transaction[] {
-  let transactions: Transaction[] = [];
-  for (let j = 0; j < n; ++j) {
-    transactions.push(
-        new Transaction(
-            new Field(s + 1 + j),
-            new Int64(new Field(value)),
-            new TransactionType(
-                new Bool(true),
-                new Bool(false),
-                new Bool(false),
-                new Bool(false)
-            ),
-            new UInt64(new Field(tstart + tdelta * j))
-        )
-    );
-  }
-  return transactions;
+  return Promise.resolve(
+    new AccountStatement(
+      new Field(_id),
+      new UInt64(new Field(final_balance)),
+      new UInt64(new Field(now)), // timestamp
+      new UInt64(new Field(now - months * 30 * 24 * 60 * 60 - 1)),
+      new UInt64(new Field(now + 1)),
+      transactions
+    )
+  );
 }
